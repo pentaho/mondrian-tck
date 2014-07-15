@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.pentaho</groupId>
+  <artifactId>mondrian-tck</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>org.pentaho</groupId>
+    <artifactId>pentaho-ce-jar-parent-pom</artifactId>
+    <!-- specific versions set upon migration to maintenance -->
+    <version>RELEASE</version>
+  </parent>
+  
+  <name>Pentaho Community Edition Project: mondrian-tck</name>
+  <description>a Pentaho sponsored open source project</description>
+  <url>http://www.pentaho.org</url>
+  
+  <licenses>
+    <license>
+      <name>The MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  
+  <!-- 
+  <developers>
+    <developer>
+      <name>YOU</name>
+      <email>YOUR_EMAIL</email>
+      <roles>
+        <role>creator</role>
+      </roles>
+    </developer>
+  </developers>
+   -->
+
+  <properties>
+    <!-- 
+    <some-dependency-artifactid.version>1.2.3</some-dependency-artifactid.version>
+     -->
+  </properties>
+
+  <!-- ensure this matches your actual github repo location -->
+  <scm>
+    <connection>scm:git:git@github.com:${github.user}/${project.artifactId}.git</connection>
+    <url>scm:git:git@github.com:${github.user}/${project.artifactId}.git</url>
+    <developerConnection>scm:git:git@github.com:${github.user}/${project.artifactId}.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+    
+  <dependencies>
+
+    <!-- 'COMPILE' SCOPED DEPS -->
+    
+    <!-- 'RUNTIME' SCOPED DEPS -->
+    
+    <!-- 'PROVIDED' SCOPED DEPS -->
+    
+    <!-- 'TEST' SCOPED DEPS -->
+  
+  </dependencies>
+  
+    
+  <!-- this is for bootstrapping only; you should really just add this to your settings.xml -->
+  <repositories>
+    <repository>
+      <id>pentaho.resolve.repo</id>
+      <name>Pentaho Group Resolve Repository</name>
+      <url>http://nexus.pentaho.org/content/groups/omni/</url>
+      <releases>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </releases>
+      <snapshots>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
+</project>
