@@ -39,19 +39,19 @@ public class MondrianExpectation {
   }
 
   private String cellSetToString( CellSet cellSet ) {
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try {
-      final PrintWriter pw = new PrintWriter( baos );
+      final PrintWriter pw = new PrintWriter( stream );
       new TraditionalCellSetFormatter().format( cellSet, pw );
       pw.flush();
     } finally {
       try {
-        baos.close();
+        stream.close();
       } catch ( IOException e ) {
         e.printStackTrace();
       }
     }
-    return baos.toString().replaceAll( "\r\n", "\n" );
+    return stream.toString().replaceAll( "\r\n", "\n" );
   }
 
   public static Builder newBuilder() {
