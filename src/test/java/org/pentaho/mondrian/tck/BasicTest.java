@@ -2,6 +2,8 @@ package org.pentaho.mondrian.tck;
 
 import mondrian.olap.MondrianProperties;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -10,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 
 public class BasicTest {
+  private static final Logger logger = LoggerFactory.getLogger( BasicTest.class );
+
   @Test
   public void testSelectFromSales() throws SQLException, IOException, ExecutionException {
     final MondrianExpectation expectation =
@@ -34,5 +38,25 @@ public class BasicTest {
         .build();
     MondrianContext context = MondrianContext.defaultContext();
     context.verify( expectation );
+  }
+
+  @SuppressWarnings( "UnusedDeclaration" )
+  public void testExampleOverrideProperties() throws Exception {
+    new PropertyContext()
+      .withProperty( MondrianProperties.instance().ResultLimit, "5" )
+      .execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            MondrianExpectation expectation =
+              MondrianExpectation.newBuilder().query( "Select from Sales" ).build();
+            try {
+              MondrianContext.defaultContext().verify( expectation );
+            } catch ( Exception e ) {
+              logger.error( "oops", e );
+              throw new RuntimeException( e );
+            }
+          }
+        } );
   }
 }
