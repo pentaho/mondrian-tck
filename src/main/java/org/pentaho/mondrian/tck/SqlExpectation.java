@@ -38,7 +38,7 @@ public class SqlExpectation {
     final List<String> effectiveCols = new ArrayList<String>();
     final ResultSetMetaData rsm = rs.getMetaData();
     for ( int i = 1; i <= rsm.getColumnCount(); i++ ) {
-        effectiveCols.add( rsm.getColumnName( i ) );
+      effectiveCols.add( rsm.getColumnName( i ) );
     }
     return effectiveCols.toArray( new String[ effectiveCols.size() ] );
   }
@@ -50,38 +50,38 @@ public class SqlExpectation {
         final StringBuilder curRow = new StringBuilder();
         rs.next();
         for ( int j = 1; j <= nbCols; j++ ) {
-            Object rawValue = rs.getObject(j);
-            validateType( rawValue, types[j] );
-            curRow.append( rawValue.toString() );
+          Object rawValue = rs.getObject( j );
+          validateType( rawValue, types[j] );
+          curRow.append( rawValue.toString() );
         }
       }
     }
   }
 
   private void validateType( Object actual, int expected ) throws Exception {
-    switch (expected) {
+    switch ( expected ) {
       case java.sql.Types.BIGINT:
         assertTrue(
           "Wrong type for column.",
-          actual.getClass().equals( Long.class ));
+          actual.getClass().equals( Long.class ) );
         break;
 
       case java.sql.Types.BOOLEAN:
         assertTrue(
           "Wrong type for column.",
-          actual.getClass().equals( Boolean.class ));
+          actual.getClass().equals( Boolean.class ) );
         break;
 
       case java.sql.Types.INTEGER:
         assertTrue(
           "Wrong type for column.",
-          actual.getClass().equals( Integer.class ));
+          actual.getClass().equals( Integer.class ) );
         break;
 
       case java.sql.Types.VARCHAR:
         assertTrue(
           "Wrong type for column.",
-          actual.getClass().equals( String.class ));
+          actual.getClass().equals( String.class ) );
         break;
 
       default:
