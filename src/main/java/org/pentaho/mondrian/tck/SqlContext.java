@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.util.concurrent.ExecutionException;
 
 import mondrian.olap.MondrianProperties;
+import mondrian.rolap.RolapUtil;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -19,6 +20,7 @@ public class SqlContext {
     CacheBuilder.newBuilder().build(new CacheLoader<String, SqlContext>() {
       @Override
       public SqlContext load( String key ) throws Exception {
+        RolapUtil.loadDrivers( MondrianProperties.instance().JdbcDrivers.get() );
         Connection connection = DriverManager.getConnection( key, "foodmart", "foodmart" );
         return new SqlContext( connection );
       }
