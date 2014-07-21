@@ -14,7 +14,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-public class SqlContext {
+public class SqlContext extends Context {
 
   private static final LoadingCache<String, SqlContext> instances =
     CacheBuilder.newBuilder().build(new CacheLoader<String, SqlContext>() {
