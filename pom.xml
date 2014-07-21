@@ -2,6 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <!--suppress MavenRedundantGroupId -->
   <groupId>org.pentaho</groupId>
   <artifactId>mondrian-tck</artifactId>
   <version>1.0.0-SNAPSHOT</version>
@@ -85,12 +86,6 @@
       <version>TRUNK-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>pentaho</groupId>
-      <artifactId>pentaho-big-data-plugin</artifactId>
-      <type>zip</type>
-      <version>TRUNK-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>17.0</version>
@@ -127,30 +122,47 @@
       </snapshots>
     </repository>
   </repositories>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <id>unpack-big-data-plugin</id>
-            <phase>test</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeGroupIds>pentaho</includeGroupIds>
-              <includeArtifactIds>pentaho-big-data-plugin</includeArtifactIds>
-              <outputDirectory>
-                ${project.basedir}
-              </outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+  <profiles>
+    <profile>
+      <id>bigdata</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>pentaho</groupId>
+          <artifactId>pentaho-big-data-plugin</artifactId>
+          <type>zip</type>
+          <version>TRUNK-SNAPSHOT</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.2</version>
+            <executions>
+              <execution>
+                <id>unpack-big-data-plugin</id>
+                <phase>generate-test-resources</phase>
+                <goals>
+                  <goal>unpack-dependencies</goal>
+                </goals>
+                <configuration>
+                  <includeGroupIds>pentaho</includeGroupIds>
+                  <includeArtifactIds>pentaho-big-data-plugin</includeArtifactIds>
+                  <outputDirectory>
+                    ${project.basedir}
+                  </outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
