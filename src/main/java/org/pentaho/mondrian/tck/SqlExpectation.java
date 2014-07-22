@@ -21,15 +21,13 @@
  */
 package org.pentaho.mondrian.tck;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class SqlExpectation {
 
@@ -58,14 +56,14 @@ public class SqlExpectation {
     if ( columns == null ) {
       return;
     }
-    assertEquals(
+    assertArrayEquals(
       "Column names do not correspond to those expected.",
       columns,
       rsToColumns( rs ) );
   }
 
   private String[] rsToColumns( ResultSet rs ) throws Exception {
-    final List<String> effectiveCols = new ArrayList<String>();
+    final List<String> effectiveCols = new ArrayList<>();
     final ResultSetMetaData rsm = rs.getMetaData();
     for ( int i = 1; i <= rsm.getColumnCount(); i++ ) {
       effectiveCols.add( rsm.getColumnName( i ) );
@@ -220,7 +218,7 @@ public class SqlExpectation {
     }
 
     /**
-     * Sets the expected column types. Use values in {@link Types}.
+     * Sets the expected column types. Use values in {@link java.sql.Types}.
      * <p>(optional)
      */
     public Builder types( int... types ) {
