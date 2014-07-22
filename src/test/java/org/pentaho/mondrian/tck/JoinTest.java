@@ -122,23 +122,17 @@ public class JoinTest {
     final SqlExpectation expct =
       newBuilder()
 
-        // We put two tables in the FROM clause and we want the cross product of both sets of rows.
         .query( "select warehouse.warehouse_id, warehouse_class.description, inventory_fact_1997.store_id from warehouse, warehouse_class, inventory_fact_1997 where warehouse.warehouse_class_id = warehouse_class.warehouse_class_id and inventory_fact_1997.warehouse_id = warehouse.warehouse_id" )
 
-        // We expect two columns.
         .columns( "warehouse_id", "description", "store_id" )
 
-        // We want an integer and a string
         .types( Types.INTEGER, Types.VARCHAR, Types.INTEGER )
 
-        // We will validate the first rows content.
         .rows( "2|Medium Independent|2" )
 
-        // We won't validate all rows.
         .partial()
         .build();
 
-    // Validate
     SqlContext.defaultContext().verify( expct );
   }
 
@@ -150,23 +144,73 @@ public class JoinTest {
     final SqlExpectation expct =
       newBuilder()
 
-        // We put two tables in the FROM clause and we want the cross product of both sets of rows.
         .query( "select warehouse.warehouse_id, warehouse_class.description, inventory_fact_1997.store_id from warehouse join warehouse_class on (warehouse.warehouse_class_id = warehouse_class.warehouse_class_id) join inventory_fact_1997 on (inventory_fact_1997.warehouse_id = warehouse.warehouse_id)" )
 
-        // We expect two columns.
         .columns( "warehouse_id", "description", "store_id" )
 
-        // We want an integer and a string
         .types( Types.INTEGER, Types.VARCHAR, Types.INTEGER )
 
-        // We will validate the first rows content.
         .rows( "2|Medium Independent|2" )
 
-        // We won't validate all rows.
         .partial()
         .build();
 
-    // Validate
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-89 style.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle star schemas.
+   */
+  @Test
+  public void testThreeWayJoin89() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from warehouse, inventory_fact_1997, product, time_by_day\n"
+          + "where inventory_fact_1997.warehouse_id = warehouse.warehouse_id and inventory_fact_1997.time_id = time_by_day.time_id and inventory_fact_1997.product_id = product.product_id\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "2|2|369|94" )
+
+        .partial()
+        .build();
+
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-92 style.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle star schemas.
+   */
+  @Test
+  public void testThreeWayJoin92() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from inventory_fact_1997\n"
+          + "join warehouse on (inventory_fact_1997.warehouse_id = warehouse.warehouse_id)\n"
+          + "join product on (inventory_fact_1997.product_id = product.product_id)\n"
+          + "join time_by_day on (inventory_fact_1997.time_id = time_by_day.time_id)\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "2|2|369|94" )
+
+        .partial()
+        .build();
+
     SqlContext.defaultContext().verify( expct );
   }
 }
