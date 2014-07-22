@@ -28,45 +28,40 @@ import org.pentaho.di.core.plugins.LifecyclePluginType;
 import org.pentaho.di.core.plugins.Plugin;
 import org.pentaho.di.core.plugins.PluginRegistry;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static java.nio.file.Files.*;
+
 public class BigDataPluginUtil {
-
-  private static final FilenameFilter JAR_FILTER = new FilenameFilter() {
-    @Override public boolean accept( final File dir, final String name ) {
-      return name.endsWith( ".jar" );
-    }
-  };
-
-  public static void prepareBigDataPlugin( final File pluginFolder, final String activeHadoopConfig )
+  public static void prepareBigDataPlugin( final Path pluginFolder, final String activeHadoopConfig )
     throws IOException, KettlePluginException {
     writeActiveHadoopConfig( pluginFolder, activeHadoopConfig );
     registerPlugin( pluginFolder );
   }
 
-  private static void writeActiveHadoopConfig( final File pluginFolder, final String activeHadoopConfig )
+  private static void writeActiveHadoopConfig( final Path pluginFolder, final String activeHadoopConfig )
     throws IOException {
     Properties pluginProperties = new Properties();
-    File pluginPropertiesFile = new File( pluginFolder, "plugin.properties" );
-    FileReader reader = new FileReader( pluginPropertiesFile );
-    pluginProperties.load( reader );
-    reader.close();
+    Path pluginPropertiesFile = pluginFolder.resolve( "plugin.properties" );
+    try ( BufferedReader reader = newBufferedReader( pluginPropertiesFile, Charset.defaultCharset() ) ) {
+      pluginProperties.load( reader );
+    }
     pluginProperties.setProperty( "active.hadoop.configuration", activeHadoopConfig );
-    FileWriter writer = new FileWriter( pluginPropertiesFile, false );
-    pluginProperties.store( writer, "" );
-    writer.close();
+    try ( BufferedWriter writer = newBufferedWriter( pluginPropertiesFile, Charset.defaultCharset() ) ) {
+      pluginProperties.store( writer, "" );
+    }
   }
 
-  private static void registerPlugin( final File pluginFolder ) throws MalformedURLException, KettlePluginException {
+  private static void registerPlugin( final Path pluginFolder ) throws IOException, KettlePluginException {
     final Map<Class<?>, String> classMap = new HashMap<>();
     classMap.put( LifecycleListener.class, "org.pentaho.di.core.hadoop.HadoopSpoonPlugin" );
     classMap.put( GUIOption.class, "org.pentaho.di.core.hadoop.HadoopSpoonPlugin" );
@@ -74,20 +69,21 @@ public class BigDataPluginUtil {
     ArrayList<String> libraries = listLibs( pluginFolder );
     Plugin plugin = new Plugin(
       new String[] { "HadoopSpoonPlugin" }, LifecyclePluginType.class, LifecycleListener.class, "", "HadoopSpoonPlugin",
-      "", null, false, false, classMap, libraries, null, pluginFolder.toURI().toURL(), null, null, null );
+      "", null, false, false, classMap, libraries, null, pluginFolder.toUri().toURL(), null, null, null );
     PluginRegistry.getInstance().registerPlugin( LifecyclePluginType.class, plugin );
   }
 
-  private static ArrayList<String> listLibs( final File pluginFolder ) {
+  private static ArrayList<String> listLibs( final Path pluginFolder ) throws IOException {
     ArrayList<String> libraries = new ArrayList<>();
-    String[] topLibs = pluginFolder.list( JAR_FILTER );
-    for ( String topLib : topLibs ) {
-      libraries.add( pluginFolder.getAbsolutePath() + "/" + topLib );
+    try ( DirectoryStream<Path> paths = newDirectoryStream( pluginFolder, "*.jar" ) ) {
+      for ( Path path : paths ) {
+        libraries.add( path.toString() );
+      }
     }
-    File pluginLib = new File( pluginFolder, "lib" );
-    String[] libs = pluginLib.list( JAR_FILTER );
-    for ( String lib : libs ) {
-      libraries.add( pluginLib.getAbsolutePath() + "/" + lib );
+    try ( DirectoryStream<Path> paths = newDirectoryStream( pluginFolder.resolve( "lib" ), "*.jar" ) ) {
+      for ( Path path : paths ) {
+        libraries.add( path.toString() );
+      }
     }
     return libraries;
   }

@@ -22,10 +22,12 @@
 package org.pentaho.mondrian.tck;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.Properties;
+
+import static java.nio.file.Files.newBufferedReader;
 
 abstract class Context {
 
@@ -36,7 +38,7 @@ abstract class Context {
       testProperties = loadTestProperties();
       if ( Boolean.parseBoolean( testProperties.getProperty( "register.big-data-plugin" ) ) ) {
         BigDataPluginUtil.prepareBigDataPlugin(
-          new File( testProperties.getProperty( "big-data-plugin.folder" ) ),
+          Paths.get( testProperties.getProperty( "big-data-plugin.folder" ) ),
           testProperties.getProperty( "active.hadoop.configuration" ) );
       }
     } catch ( Exception e ) {
@@ -46,7 +48,9 @@ abstract class Context {
 
   private static Properties loadTestProperties() throws IOException {
     Properties testProperties = new Properties();
-    testProperties.load( new BufferedReader( new FileReader( "test.properties" ) ) );
+    try ( BufferedReader reader = newBufferedReader( Paths.get( "test.properties" ), Charset.defaultCharset() ) ) {
+      testProperties.load( reader );
+    }
     return testProperties;
   }
 }
