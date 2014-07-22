@@ -167,7 +167,7 @@ public class SqlExpectation {
      * Sets the column names expected
      * <p>(optional)
      */
-    public Builder columns( String[] columns ) {
+    public Builder columns( String... columns ) {
       this.columns = columns;
       return this;
     }
@@ -176,7 +176,7 @@ public class SqlExpectation {
      * Sets the expected column types. Use values in {@link Types}.
      * <p>(optional)
      */
-    public Builder types( int[] types ) {
+    public Builder types( int... types ) {
       this.types = types;
       return this;
     }
@@ -185,7 +185,7 @@ public class SqlExpectation {
      * Sets the expected rows. The value delimiter is pipe ( '|' ).
      * <p>(optional)
      */
-    public Builder rows( String[] rows ) {
+    public Builder rows( String... rows ) {
       this.rows = rows;
       return this;
     }
