@@ -328,7 +328,7 @@ public class JoinTest {
           + "and inventory_fact_1997.time_id = time_by_day.time_id\n"
           + "and inventory_fact_1997.product_id = product.product_id\n"
           + "and warehouse_class.warehouse_class_id = warehouse.warehouse_class_id\n"
-          + "and wc2.warehouse_class_id = wc2.warehouse_class_id\n"
+          + "and wc2.warehouse_class_id = warehouse.warehouse_class_id\n"
           + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
 
         .columns( "description", "description", "warehouse_id", "store_id", "time_id", "product_id" )
