@@ -41,8 +41,13 @@ public class SqlContext extends Context {
     CacheBuilder.newBuilder().build(new CacheLoader<String, SqlContext>() {
       @Override
       public SqlContext load( String key ) throws Exception {
+        // Load the drivers
         RolapUtil.loadDrivers( MondrianProperties.instance().JdbcDrivers.get() );
-        Connection connection = DriverManager.getConnection( key, "foodmart", "foodmart" );
+        Connection connection =
+          DriverManager.getConnection(
+            key,
+            MondrianProperties.instance().TestJdbcUser.get(),
+            MondrianProperties.instance().TestJdbcPassword.get() );
         return new SqlContext( connection );
       }
     } );

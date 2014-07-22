@@ -31,6 +31,8 @@ public class JoinTest {
 
   /**
    * This test verifies that we can join two tables through the WHERE clause.
+   *
+   *    Fact----->D1
    */
   @Test
   public void testOneWayJoin89() throws Exception {
@@ -59,6 +61,8 @@ public class JoinTest {
 
   /**
    * This test verifies that we can join two tables through the FROM clause.
+   *
+   *    Fact----->D1
    */
   @Test
   public void testOneWayJoin92() throws Exception {
@@ -88,6 +92,8 @@ public class JoinTest {
   /**
    * This test verifies that we can create a cross product of two tables
    * by omitting any join or equality predicates.
+   *
+   *     D1-----D2
    */
   @Test
   public void testImplicitJoin() throws Exception {
@@ -116,6 +122,8 @@ public class JoinTest {
 
   /**
    * This test verifies that we can join three tables together by using SQL-89 style joins.
+   *
+   *     D1<-----Fact----->D2
    */
   @Test
   public void testTwoWayJoin89() throws Exception {
@@ -138,6 +146,8 @@ public class JoinTest {
 
   /**
    * This test verifies that we can join three tables together by using SQL-92 style joins.
+   *
+   *     D1<-----Fact----->D2
    */
   @Test
   public void testTwoWayJoin92() throws Exception {
@@ -162,6 +172,11 @@ public class JoinTest {
    * This test verifies that we can do a 3 way join, SQL-89 style.
    * This results in a fact table being joined by 3 different tables and exercises
    * the optimizers capability to handle star schemas.
+   *
+   *     D1<--------      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
    */
   @Test
   public void testThreeWayJoin89() throws Exception {
@@ -189,6 +204,11 @@ public class JoinTest {
    * This test verifies that we can do a 3 way join, SQL-92 style.
    * This results in a fact table being joined by 3 different tables and exercises
    * the optimizers capability to handle star schemas.
+   *
+   *     D1<--------      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
    */
   @Test
   public void testThreeWayJoin92() throws Exception {
@@ -207,6 +227,153 @@ public class JoinTest {
         .types( Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
 
         .rows( "2|2|369|94" )
+
+        .partial()
+        .build();
+
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-89 style.
+   * We also add one more table joined as a leaf to one of the dimension table.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle star schemas that use multiple tables to represent
+   * a dimension.
+   *
+   *     D1'<--D1<--      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
+   */
+  @Test
+  public void testThreeWayJoinPlusSingleStarLeaf89() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse_class.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from warehouse, inventory_fact_1997, product, time_by_day, warehouse_class\n"
+          + "where inventory_fact_1997.warehouse_id = warehouse.warehouse_id and inventory_fact_1997.time_id = time_by_day.time_id and inventory_fact_1997.product_id = product.product_id and warehouse_class.warehouse_class_id = warehouse.warehouse_class_id\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "description", "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.VARCHAR, Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "Medium Independent|2|2|369|94" )
+
+        .partial()
+        .build();
+
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-92 style.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle star schemas.
+   *
+   *     D1'<--D1<--      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
+   */
+  @Test
+  public void testThreeWayJoinPlusSingleStarLeaf92() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse_class.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from inventory_fact_1997\n"
+          + "join warehouse on (inventory_fact_1997.warehouse_id = warehouse.warehouse_id)\n"
+          + "join product on (inventory_fact_1997.product_id = product.product_id)\n"
+          + "join time_by_day on (inventory_fact_1997.time_id = time_by_day.time_id)\n"
+          + "join warehouse_class on (warehouse_class.warehouse_class_id = warehouse.warehouse_class_id)\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "description", "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.VARCHAR, Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "Medium Independent|2|2|369|94" )
+
+        .partial()
+        .build();
+
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-89 style.
+   * We also add two more tables joined as leafs to one of the dimension table.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle full star schemas that use multiple tables to represent
+   * a dimension, one of these tables being shared by two hierarchies and acting as a bridge table.
+   *
+   *    D1'<--
+   *          \
+   *    D1''<--D1<--      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
+   */
+  @Test
+  public void testThreeWayJoinPlusDoubleStarLeaf89() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse_class.description, wc2.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from warehouse, inventory_fact_1997, product, time_by_day, warehouse_class, warehouse_class as wc2\n"
+          + "where inventory_fact_1997.warehouse_id = warehouse.warehouse_id\n"
+          + "and inventory_fact_1997.time_id = time_by_day.time_id\n"
+          + "and inventory_fact_1997.product_id = product.product_id\n"
+          + "and warehouse_class.warehouse_class_id = warehouse.warehouse_class_id\n"
+          + "and wc2.warehouse_class_id = wc2.warehouse_class_id\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "description", "description", "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "Medium Independent|Medium Independent|2|2|369|94" )
+
+        .partial()
+        .build();
+
+    SqlContext.defaultContext().verify( expct );
+  }
+
+  /**
+   * This test verifies that we can do a 3 way join, SQL-92 style.
+   * This results in a fact table being joined by 3 different tables and exercises
+   * the optimizers capability to handle star schemas.
+   *
+   *    D1'<--
+   *          \
+   *    D1''<--D1<--      ----->D2
+   *                \    /
+   *                 Fact
+   *     D3 <-------/
+   */
+  @Test
+  public void testThreeWayJoinPlusDoubleStarLeaf92() throws Exception {
+    final SqlExpectation expct =
+      newBuilder()
+
+        .query( "select warehouse_class.description, wc2.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
+          + "from inventory_fact_1997\n"
+          + "join warehouse on (inventory_fact_1997.warehouse_id = warehouse.warehouse_id)\n"
+          + "join product on (inventory_fact_1997.product_id = product.product_id)\n"
+          + "join time_by_day on (inventory_fact_1997.time_id = time_by_day.time_id)\n"
+          + "join warehouse_class on (warehouse_class.warehouse_class_id = warehouse.warehouse_class_id)\n"
+          + "join warehouse_class as wc2 on (wc2.warehouse_class_id = warehouse.warehouse_class_id)\n"
+          + "order by warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id" )
+
+        .columns( "description", "description", "warehouse_id", "store_id", "time_id", "product_id" )
+
+        .types( Types.VARCHAR, Types.VARCHAR, Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER )
+
+        .rows( "Medium Independent|Medium Independent|2|2|369|94" )
 
         .partial()
         .build();

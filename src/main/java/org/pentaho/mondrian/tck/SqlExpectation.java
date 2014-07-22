@@ -97,6 +97,7 @@ public class SqlExpectation {
 
         // Validate types
         if ( types != null ) {
+          validateMetaType( rs );
           validateType( rs.getMetaData().getColumnName( j ), rawValue, types[j - 1] );
         }
 
@@ -124,6 +125,22 @@ public class SqlExpectation {
       if ( partial && rowNum == ( rows.length - 1 ) ) {
         break;
       }
+    }
+  }
+
+  private void validateMetaType( ResultSet rs ) throws Exception {
+    if ( types == null ) {
+      return;
+    }
+    int columnCount = rs.getMetaData().getColumnCount();
+    for ( int i = 1; i <= columnCount; i++ ) {
+      assertEquals(
+        "Wrong meta type for column " + rs.getMetaData().getColumnName( i )
+        + ", expected meta type "
+        + types[i - 1]
+        + " but actual meta type was " + rs.getMetaData().getColumnType( i ),
+        types[i - 1],
+        rs.getMetaData().getColumnType( i ) );
     }
   }
 
