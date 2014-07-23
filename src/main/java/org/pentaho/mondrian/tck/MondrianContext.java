@@ -21,41 +21,58 @@
  */
 package org.pentaho.mondrian.tck;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import mondrian.olap.MondrianProperties;
+import mondrian.rolap.RolapUtil;
+import org.olap4j.CellSet;
+import org.olap4j.OlapConnection;
+import org.olap4j.OlapException;
+import org.olap4j.OlapStatement;
+
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import mondrian.olap.MondrianProperties;
-import mondrian.rolap.RolapUtil;
-
-import org.olap4j.CellSet;
-import org.olap4j.OlapConnection;
-import org.olap4j.OlapException;
-import org.olap4j.OlapStatement;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-
 public class MondrianContext extends Context {
 
   private static final LoadingCache<String, MondrianContext> instances =
-    CacheBuilder.newBuilder().build(new CacheLoader<String, MondrianContext>() {
+    CacheBuilder.newBuilder().build( new CacheLoader<String, MondrianContext>() {
       @Override
       public MondrianContext load( String key ) throws Exception {
         Connection connection = DriverManager.getConnection( key );
         OlapConnection olapConnection = connection.unwrap( OlapConnection.class );
-        return new MondrianContext( olapConnection );
+        return new MondrianContext( olapConnection, key );
+      }
+    } );
+
+  private static final LoadingCache<String, Path> catalogs =
+    CacheBuilder.newBuilder().build( new CacheLoader<String, Path>() {
+      @Override
+      public Path load( String key ) throws Exception {
+        Path catalogFile = Files.createTempFile( "temp", ".xml" );
+        catalogFile.toFile().deleteOnExit();
+        try ( Writer writer = Files.newBufferedWriter( catalogFile, Charset.defaultCharset() ) ) {
+          writer.write( key );
+        }
+        return catalogFile;
       }
     } );
 
   private OlapConnection olapConnection;
+  private String connectString;
 
-  private MondrianContext( final OlapConnection olapConnection ) {
+  private MondrianContext( final OlapConnection olapConnection, final String connectString ) {
     this.olapConnection = olapConnection;
+    this.connectString = connectString;
   }
 
   public static MondrianContext forConnection( String connectionString ) throws ExecutionException, IOException {
@@ -83,5 +100,14 @@ public class MondrianContext extends Context {
         sqls.add( sql );
       }
     };
+  }
+
+  public MondrianContext withCatalog( String catalogXml ) throws IOException, ExecutionException {
+    Path catalogFile = catalogs.get( catalogXml );
+    return forConnection( replaceCatalog( connectString, catalogFile ) );
+  }
+
+  private String replaceCatalog( final String connectString, final Path catalogFile ) {
+    return connectString.replaceFirst( "Catalog=[^;]+;", "Catalog=" + catalogFile.toString() + ";" );
   }
 }
