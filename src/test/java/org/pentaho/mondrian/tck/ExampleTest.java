@@ -25,10 +25,6 @@ import mondrian.olap.MondrianProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.concurrent.ExecutionException;
-
 import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 
 @SuppressWarnings( "UnusedDeclaration" )
@@ -36,7 +32,7 @@ public class ExampleTest {
   private static final Logger logger = LoggerFactory.getLogger( ExampleTest.class );
 
   @SuppressWarnings( "UnusedDeclaration" )
-  public void testExampleSelectFromSales() throws SQLException, IOException, ExecutionException {
+  public void testExampleSelectFromSales() throws Exception {
     final MondrianExpectation expectation =
       newBuilder()
         .query( "select from sales" )
