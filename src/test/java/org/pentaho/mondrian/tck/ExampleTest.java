@@ -22,7 +22,6 @@
 package org.pentaho.mondrian.tck;
 
 import mondrian.olap.MondrianProperties;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +31,12 @@ import java.util.concurrent.ExecutionException;
 
 import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 
-public class BasicTest {
-  private static final Logger logger = LoggerFactory.getLogger( BasicTest.class );
+@SuppressWarnings( "UnusedDeclaration" )
+public class ExampleTest {
+  private static final Logger logger = LoggerFactory.getLogger( ExampleTest.class );
 
-  @Test
-  public void testSelectFromSales() throws SQLException, IOException, ExecutionException {
+  @SuppressWarnings( "UnusedDeclaration" )
+  public void testExampleSelectFromSales() throws SQLException, IOException, ExecutionException {
     final MondrianExpectation expectation =
       newBuilder()
         .query( "select from sales" )
