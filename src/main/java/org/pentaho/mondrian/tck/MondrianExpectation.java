@@ -22,6 +22,9 @@
 package org.pentaho.mondrian.tck;
 
 import com.google.common.base.Optional;
+
+import mondrian.spi.Dialect;
+
 import org.olap4j.CellSet;
 import org.olap4j.layout.TraditionalCellSetFormatter;
 
@@ -50,18 +53,33 @@ public class MondrianExpectation {
     return query;
   }
 
-  public void verify( CellSet cellSet, List<String> sqls ) {
+  public void verify( CellSet cellSet, List<String> sqls, Dialect dialect ) {
     if ( result.isPresent() ) {
       assertEquals( result.get(), cellSetToString( cellSet ) );
     }
 
     List<String> cleanSqls = new ArrayList<>();
     for ( String sql : sqls ) {
-      cleanSqls.add( cleanLineEndings( sql ) );
+      sql = cleanLineEndings( sql );
+      sql = cleanTicks( sql, dialect );
+      sql = cleanAlias( sql, dialect );
+      cleanSqls.add( sql );
     }
 
     for ( String expectedSql : this.expectedSqls ) {
-      assertTrue( "Expected sql was not executed: \n" + expectedSql, cleanSqls.contains( cleanLineEndings( expectedSql ) ) );
+      expectedSql = cleanLineEndings( expectedSql );
+      expectedSql = cleanTicks( expectedSql, dialect );
+      expectedSql = cleanAlias( expectedSql, dialect );
+      boolean found = false;
+      for ( String cleanString : cleanSqls ) {
+        if ( cleanString.contains( expectedSql ) ) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue(
+        "Expected sql was not executed: \n" + expectedSql,
+        found );
     }
   }
 
@@ -83,6 +101,14 @@ public class MondrianExpectation {
 
   private static String cleanLineEndings( String string ) {
     return string.replaceAll( "\r\n", "\n" );
+  }
+
+  private static String cleanTicks( String sql, Dialect dialect ) {
+    return sql.replaceAll( "\\" + dialect.getQuoteIdentifierString(), "" );
+  }
+
+  private static String cleanAlias( String sql, Dialect dialect ) {
+    return sql.replaceAll( "\\sas\\s", " " );
   }
 
   public static Builder newBuilder() {

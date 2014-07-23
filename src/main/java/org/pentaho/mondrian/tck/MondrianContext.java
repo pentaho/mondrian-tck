@@ -25,10 +25,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import mondrian.olap.MondrianProperties;
+import mondrian.rolap.RolapConnection;
 import mondrian.rolap.RolapUtil;
 import org.olap4j.CellSet;
 import org.olap4j.OlapConnection;
-import org.olap4j.OlapException;
 import org.olap4j.OlapStatement;
 
 import java.io.IOException;
@@ -86,14 +86,19 @@ public class MondrianContext extends Context {
     return forConnection( MondrianProperties.instance().TestConnectString.get() );
   }
 
-  public void verify( MondrianExpectation expectation ) throws OlapException {
+  public void verify( MondrianExpectation expectation ) throws Exception {
     final List<String> sqls = new ArrayList<>();
     RolapUtil.ExecuteQueryHook existingHook = RolapUtil.getHook();
     RolapUtil.setHook( sqlCollector( sqls ) );
+
     OlapStatement statement = olapConnection.createStatement();
     CellSet cellSet = statement.executeOlapQuery( expectation.getQuery() );
     RolapUtil.setHook( existingHook );
-    expectation.verify( cellSet, sqls );
+
+    expectation.verify(
+      cellSet,
+      sqls,
+      olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
   }
 
   private RolapUtil.ExecuteQueryHook sqlCollector( final List<String> sqls ) {

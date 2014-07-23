@@ -380,4 +380,148 @@ public class JoinTest {
 
     SqlContext.defaultContext().verify( expct );
   }
+
+  /**
+   * This test verifies that we can do native crossjoins on a degenerate fact
+   * table. We expect Customer and Store to be crossjoined in the same SQL query.
+   */
+  @Test
+  public void testNonEmptyCrossJoinDegenerate() throws Exception {
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query(
+        "select "
+        + " non empty { CrossJoin([customer].[customer].members, [store].[store].members ) } on 0"
+        + " from [Sales]" )
+      .sql(
+          "select\n"
+          + "    sales_fact_1997.customer_id as c0,\n"
+          + "    sales_fact_1997.store_id as c1\n"
+          + "from\n"
+          + "    sales_fact_1997 as sales_fact_1997\n"
+          + "group by\n"
+          + "    sales_fact_1997.customer_id,\n"
+          + "    sales_fact_1997.store_id\n" )
+      .build();
+    MondrianContext.forCatalog(
+      "<Schema name=\"FoodMart\">"
+      + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
+      + "    <Table name=\"sales_fact_1997\"/>"
+      + "  <Dimension name=\"customer\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
+      + "      <Table name=\"sales_fact_1997\"/>\n"
+      + "      <Level name=\"customer\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "  <Dimension name=\"store\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"store_id\">\n"
+      + "      <Table name=\"sales_fact_1997\"/>\n"
+      + "      <Level name=\"store\" type=\"Integer\" column=\"store_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
+      + "  </Cube>"
+      + "</Schema>" ).verify( expectation );
+  }
+
+  /**
+   * This test verifies that we can do native crossjoins on a star schema.
+   * We expect Customer and Store tables to be crossjoined in the same SQL query
+   * through the fact table.
+   */
+  @Test
+  public void testNonEmptyCrossJoinStar() throws Exception {
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query(
+        "select "
+        + " non empty { CrossJoin([customer].[customer].members, [store].[store].members ) } on 0"
+        + " from [Sales]" )
+      .sql(
+          "select\n"
+          + "    customer.customer_id as c0,\n"
+          + "    store.store_id as c1\n"
+          + "from\n"
+          + "    customer as customer,\n"
+          + "    sales_fact_1997 as sales_fact_1997,\n"
+          + "    store as store\n"
+          + "where\n"
+          + "    sales_fact_1997.customer_id = customer.customer_id\n"
+          + "and\n"
+          + "    sales_fact_1997.store_id = store.store_id\n"
+          + "group by\n"
+          + "    customer.customer_id,\n"
+          + "    store.store_id\n" )
+      .build();
+    MondrianContext.forCatalog(
+      "<Schema name=\"FoodMart\">"
+      + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
+      + "    <Table name=\"sales_fact_1997\"/>"
+      + "  <Dimension name=\"customer\" foreignKey=\"customer_id\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
+      + "      <Table name=\"customer\"/>\n"
+      + "      <Level name=\"customer\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "  <Dimension name=\"store\" foreignKey=\"store_id\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"store_id\">\n"
+      + "      <Table name=\"store\"/>\n"
+      + "      <Level name=\"store\" type=\"Integer\" column=\"store_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
+      + "  </Cube>"
+      + "</Schema>" ).verify( expectation );
+  }
+
+  /**
+   * This test verifies that we can do native crossjoins on a snowflake schema.
+   */
+  @Test
+  public void testNonEmptyCrossJoinSnowflake() throws Exception {
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query(
+        "select "
+        + " non empty { CrossJoin([product].[product family].members, [store].[store].members ) } on 0"
+        + " from [Sales]" )
+      .sql(
+        "select\n"
+        + "    product_class.product_family as c0,\n"
+        + "    store.store_id as c1\n"
+        + "from\n"
+        + "    product as product,\n"
+        + "    product_class as product_class,\n"
+        + "    sales_fact_1997 as sales_fact_1997,\n"
+        + "    store as store\n"
+        + "where\n"
+        + "    product.product_class_id = product_class.product_class_id\n"
+        + "and\n"
+        + "    sales_fact_1997.product_id = product.product_id\n"
+        + "and\n"
+        + "    sales_fact_1997.store_id = store.store_id\n"
+        + "group by\n"
+        + "    product_class.product_family,\n"
+        + "    store.store_id\n" )
+      .build();
+    MondrianContext.forCatalog(
+      "<Schema name=\"FoodMart\">"
+      + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
+      + "  <Table name=\"sales_fact_1997\"/>"
+      + "  <Dimension name=\"product\" foreignKey=\"product_id\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"product_id\" primaryKeyTable=\"product\">\n"
+      + "      <Join leftKey=\"product_class_id\" rightKey=\"product_class_id\">\n"
+      + "        <Table name=\"product\"/>\n"
+      + "        <Table name=\"product_class\"/>\n"
+      + "      </Join>\n"
+      + "      <Level name=\"product family\" table=\"product_class\" column=\"product_family\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>\n"
+      + "  <Dimension name=\"store\" foreignKey=\"store_id\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"store_id\">\n"
+      + "      <Table name=\"store\"/>\n"
+      + "      <Level name=\"store\" type=\"Integer\" column=\"store_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
+      + "  </Cube>"
+      + "</Schema>" ).verify( expectation );
+  }
 }
