@@ -54,8 +54,14 @@ public class MondrianExpectation {
     if ( result.isPresent() ) {
       assertEquals( result.get(), cellSetToString( cellSet ) );
     }
+
+    List<String> cleanSqls = new ArrayList<>();
+    for ( String sql : sqls ) {
+      cleanSqls.add( cleanLineEndings( sql ) );
+    }
+
     for ( String expectedSql : this.expectedSqls ) {
-      assertTrue( "Expected sql was not executed: \n" + expectedSql, sqls.contains( expectedSql ) );
+      assertTrue( "Expected sql was not executed: \n" + expectedSql, cleanSqls.contains( cleanLineEndings( expectedSql ) ) );
     }
   }
 
@@ -73,6 +79,10 @@ public class MondrianExpectation {
       }
     }
     return stream.toString().replaceAll( "\r\n", "\n" );
+  }
+
+  private static String cleanLineEndings( String string ) {
+    return string.replaceAll( "\r\n", "\n" );
   }
 
   public static Builder newBuilder() {
