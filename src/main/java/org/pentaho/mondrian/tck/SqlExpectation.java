@@ -21,9 +21,12 @@
  */
 package org.pentaho.mondrian.tck;
 
+import com.google.common.base.Function;
+
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +39,16 @@ public class SqlExpectation {
   final String[] rows;
   final boolean partial;
   final int[] types;
+  List<Function<Statement, Void>> statementModifiers;
 
-  public SqlExpectation( String query, String[] columns, int[] types, String[] rows, boolean partial ) {
+  public SqlExpectation( String query, String[] columns, int[] types, String[] rows, boolean partial,
+                         final List<Function<Statement, Void>> statementModifiers ) {
     this.query = query;
     this.columns = columns;
     this.types = types;
     this.rows = rows;
     this.partial = partial;
+    this.statementModifiers = statementModifiers;
   }
 
   public void verify( ResultSet rs ) throws Exception {
@@ -115,7 +121,7 @@ public class SqlExpectation {
       }
 
       // If there are still rows and we're not in partial mode, that's bad
-      if ( !partial && rowNum < ( rows.length - 1 ) ) {
+      if ( !partial && rowNum > ( rows.length - 1 ) ) {
         fail( "Expected number of rows doesn't match the result." );
       }
 
@@ -195,6 +201,7 @@ public class SqlExpectation {
     private String[] rows;
     private int[] types;
     private boolean partial = false;
+    private List<Function<Statement, Void>> statementModifiers = new ArrayList<>();
 
     private Builder() {
     }
@@ -244,8 +251,16 @@ public class SqlExpectation {
       return this;
     }
 
+    /**
+     * adds a function that will be run for the statement before execution
+     */
+    public Builder modifyStatement( Function<Statement, Void> statementModifier ) {
+      statementModifiers.add( statementModifier );
+      return this;
+    }
+
     public SqlExpectation build() {
-      return new SqlExpectation( query, columns, types, rows, partial );
+      return new SqlExpectation( query, columns, types, rows, partial, statementModifiers );
     }
   }
 }

@@ -1,8 +1,35 @@
 package org.pentaho.mondrian.tck;
 
+import com.google.common.base.Function;
 import org.junit.Test;
 
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import static org.junit.Assert.fail;
+
 public class TopCountTest {
+  @Test
+  public void testSetMaxRows() throws Exception {
+    SqlContext sqlContext = SqlContext.defaultContext();
+    SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
+      .query( "select unit_sales from sales_fact_1997 order by unit_sales desc" )
+      .modifyStatement( new Function<Statement, Void>() {
+        @Override
+        public Void apply( final Statement statement ) {
+          try {
+            statement.setMaxRows( 2 );
+          } catch ( SQLException e ) {
+            fail( "Should have been able to setMaxRows" );
+          }
+          return null;
+        }
+      } )
+      .rows( "6.0", "6.0" )
+      .build();
+    sqlContext.verify( sqlExpectation );
+  }
+
   @Test
   public void testTopCount() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
