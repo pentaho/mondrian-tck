@@ -50,7 +50,7 @@ public class MondrianContext extends Context {
       public MondrianContext load( String key ) throws Exception {
         Connection connection = DriverManager.getConnection( key );
         OlapConnection olapConnection = connection.unwrap( OlapConnection.class );
-        return new MondrianContext( olapConnection, key );
+        return new MondrianContext( olapConnection );
       }
     } );
 
@@ -68,15 +68,18 @@ public class MondrianContext extends Context {
     } );
 
   private OlapConnection olapConnection;
-  private String connectString;
 
-  private MondrianContext( final OlapConnection olapConnection, final String connectString ) {
+  private MondrianContext( final OlapConnection olapConnection ) {
     this.olapConnection = olapConnection;
-    this.connectString = connectString;
   }
 
   public static MondrianContext forConnection( String connectionString ) throws ExecutionException, IOException {
     return instances.get( connectionString );
+  }
+
+  public static MondrianContext forCatalog( String catalog ) throws IOException, ExecutionException {
+    return forConnection(
+      replaceCatalog( MondrianProperties.instance().TestConnectString.get(), catalogs.get( catalog ) ) );
   }
 
   public static MondrianContext defaultContext() throws IOException, ExecutionException {
@@ -102,12 +105,7 @@ public class MondrianContext extends Context {
     };
   }
 
-  public MondrianContext withCatalog( String catalogXml ) throws IOException, ExecutionException {
-    Path catalogFile = catalogs.get( catalogXml );
-    return forConnection( replaceCatalog( connectString, catalogFile ) );
-  }
-
-  private String replaceCatalog( final String connectString, final Path catalogFile ) {
+  private static String replaceCatalog( final String connectString, final Path catalogFile ) {
     return connectString.replaceFirst( "Catalog=[^;]+;", "Catalog=" + catalogFile.toString() + ";" );
   }
 }
