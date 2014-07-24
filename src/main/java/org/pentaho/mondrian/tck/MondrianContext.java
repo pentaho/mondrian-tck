@@ -111,6 +111,7 @@ public class MondrianContext extends Context {
   }
 
   private static String replaceCatalog( final String connectString, final Path catalogFile ) {
-    return connectString.replaceFirst( "Catalog=[^;]+;", "Catalog=" + catalogFile.toString() + ";" );
+    return connectString.replaceFirst( "Catalog=[^;]+;", "Catalog=" + catalogFile.toString()
+        .replaceAll( "\\\\", "/" ) + ";" );
   }
 }
