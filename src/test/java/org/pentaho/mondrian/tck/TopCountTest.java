@@ -87,18 +87,6 @@ public class TopCountTest {
           + "    CASE WHEN sum(sales_fact_1997.unit_sales) IS NULL THEN 1 ELSE 0 END, sum(sales_fact_1997.unit_sales) DESC,\n"
           + "    CASE WHEN sales_fact_1997.customer_id IS NULL THEN 1 ELSE 0 END, sales_fact_1997.customer_id ASC" )
       .build();
-    MondrianContext.forCatalog(
-      "<Schema name=\"FoodMart\">"
-        + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
-        + "    <Table name=\"sales_fact_1997\"/>"
-        + "  <Dimension name=\"customer\">\n"
-        + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
-        + "      <Table name=\"sales_fact_1997\"/>\n"
-        + "      <Level name=\"customer id\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
-        + "    </Hierarchy>\n"
-        + "  </Dimension>"
-        + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
-        + "  </Cube>"
-        + "</Schema>" ).verify( expectation );
+    MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER ).verify( expectation );
   }
 }
