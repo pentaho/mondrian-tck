@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -151,44 +152,39 @@ public class SqlExpectation {
   private void validateType( String colName, Object actual, int expected ) throws Exception {
     switch ( expected ) {
       case java.sql.Types.BIGINT:
-        assertTrue(
-          "Wrong type for column " + colName
-          + ", expected type Long but object class was " + actual.getClass().getName(),
-          actual.getClass().equals( Long.class ) );
+        checkType( colName, "Long", actual.getClass(), Long.class );
         break;
 
       case java.sql.Types.DECIMAL:
-        assertTrue(
-          "Wrong type for column " + colName
-          + ", expected type Double / BigDecimal but object class was " + actual.getClass().getName(),
-          actual.getClass().equals( BigDecimal.class )
-          || actual.getClass().equals( Double.class ) );
+        checkType( colName, "Double / BigDecimal", actual.getClass(), Double.class, BigDecimal.class );
         break;
 
       case java.sql.Types.BOOLEAN:
-        assertTrue(
-          "Wrong type for column " + colName
-          + ", expected type Boolean but object class was " + actual.getClass().getName(),
-          actual.getClass().equals( Boolean.class ) );
+        checkType( colName, "Boolean", actual.getClass(), Boolean.class );
         break;
 
       case java.sql.Types.INTEGER:
-        assertTrue(
-          "Wrong type for column " + colName
-          + ", expected type Integer but object class was " + actual.getClass().getName(),
-          actual.getClass().equals( Integer.class ) );
+        checkType( colName, "Integer", actual.getClass(), Integer.class );
         break;
 
       case java.sql.Types.VARCHAR:
-        assertTrue(
-          "Wrong type for column " + colName
-          + ", expected type String but object class was " + actual.getClass().getName(),
-          actual.getClass().equals( String.class ) );
+        checkType( colName, "String", actual.getClass(), String.class );
+        break;
+
+      case java.sql.Types.DOUBLE:
+        checkType( colName, "Double", actual.getClass(), Double.class );
         break;
 
       default:
         throw new Exception( "Expected type check not implemented." );
     }
+  }
+
+  private void checkType( String colName, String expectedType, Class actualTypeClass, Class... expectedTypeClass ) {
+    assertTrue(
+        "Wrong type for column " + colName
+            + ", expected type " + expectedType + " but object class was " + actualTypeClass.getName(),
+        Arrays.asList( expectedTypeClass ).contains( actualTypeClass ) );
   }
 
   public static Builder newBuilder() {
