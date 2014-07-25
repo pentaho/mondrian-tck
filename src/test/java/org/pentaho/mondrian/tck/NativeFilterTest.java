@@ -39,7 +39,7 @@ public class NativeFilterTest {
   }
 
   @Test
-  public void testSingleFact() throws Exception {
+  public void testFilterFunctionSingleFact() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
       .query(
         "select Filter([customer].[customer].[customer id].members, [Measures].[Unit Sales] > 500) on 0 from sales" )
@@ -65,7 +65,7 @@ public class NativeFilterTest {
   }
 
   @Test
-  public void testStar() throws Exception {
+  public void testFilterFunctionStar() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
       .query(
         "select Filter([Store].[Store].[Store City].members, [Measures].[Unit Sales] > 20000) on 0 from sales" )
@@ -116,7 +116,7 @@ public class NativeFilterTest {
   }
 
   @Test
-  public void testSnowflake() throws Exception {
+  public void testFilterFunctionSnowflake() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
       .query(
         "select Filter([Product].[Product].[Product Department].members, [Measures].[Unit Sales] > 20000) on 0 from sales" )
@@ -157,5 +157,71 @@ public class NativeFilterTest {
           + "product_class.product_department ASC" )
       .build();
     MondrianContext.forCatalog( SNOWFLAKE_WITH_PRODUCT ).verify( expectation );
+  }
+
+  @Test
+  public void testCompoundSlicerAtDifferentLevels() throws Exception {
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query(
+        "select [Measures].[Customer Count] on 0 from sales " +
+          "where ({[Store].[USA].[WA],[Store].[USA].[CA].[San Diego],[Store].[Mexico]})" )
+      .result(
+        "Axis #0:\n"
+          + "{[Store].[USA].[WA]}\n"
+          + "{[Store].[USA].[CA].[San Diego]}\n"
+          + "{[Store].[Mexico]}\n"
+          + "Axis #1:\n"
+          + "{[Measures].[Customer Count]}\n"
+          + "Row #0: 2,790\n" )
+      .sql(
+        "select\n"
+          + "    count(distinct sales_fact_1997.customer_id) as m0\n"
+          + "from\n"
+          + "    store store,\n"
+          + "    sales_fact_1997 sales_fact_1997\n"
+          + "where\n"
+          + "    sales_fact_1997.store_id = store.store_id\n"
+          + "and\n"
+          + "    (store.store_state = 'WA' "
+          + "or (store.store_city = 'San Diego' and store.store_state = 'CA') "
+          + "or store.store_country = 'Mexico')" )
+      .build();
+    MondrianContext.forCatalog( STAR_WITH_STORE ).verify( expectation );
+
+  }
+
+  @Test
+  public void testCompoundPredicate() throws Exception {
+    SqlContext sqlContext = SqlContext.defaultContext();
+    SqlExpectation expectation = SqlExpectation.newBuilder()
+      .query(
+        "select sum(sales_fact_1997.unit_sales) as m0\n" +
+          "  from store store\n" +
+          "     , product product\n" +
+          "     , sales_fact_1997 sales_fact_1997\n" +
+          " where sales_fact_1997.store_id  = store.store_id\n" +
+          "   and sales_fact_1997.product_id = product.product_id\n" +
+          "   and ((\n" +
+          "           store.store_country         = 'USA'\n" +
+          "       and store.first_opened_date = '1979-04-13'\n" +
+          "       and store.last_remodel_date = '1982-01-30 00:00:00'\n" +
+          "       )\n" +
+          "    or (\n" +
+          "         store.store_city          = 'San Diego'\n" +
+          "     and store.store_state         = 'CA'\n" +
+          "       )\n" +
+          "    or (\n" +
+          "         store.store_state         = 'WA'\n" +
+          "     and store.store_sqft          > 50000\n" +
+          "     and product.gross_weight      = 17.1\n" +
+          "       )\n" +
+          "    or (\n" +
+          "         store.store_sqft is null\n" +
+          "       )\n" +
+          "    )\n" )
+      .rows( "39329.0" )
+      .build();
+    sqlContext.verify( expectation );
+
   }
 }
