@@ -119,7 +119,8 @@ public class NativeFilterTest {
   public void testFilterFunctionSnowflake() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
       .query(
-        "select Filter([Product].[Product].[Product Department].members, [Measures].[Unit Sales] > 20000) on 0 from sales" )
+        "select Filter([Product].[Product].[Product Department].members, [Measures].[Unit Sales] > 20000) on 0 "
+          + "from sales" )
       .result(
         "Axis #0:\n"
           + "{}\n"
@@ -195,33 +196,105 @@ public class NativeFilterTest {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation expectation = SqlExpectation.newBuilder()
       .query(
-        "select sum(sales_fact_1997.unit_sales) as m0\n" +
-          "  from store store\n" +
-          "     , product product\n" +
-          "     , sales_fact_1997 sales_fact_1997\n" +
-          " where sales_fact_1997.store_id  = store.store_id\n" +
-          "   and sales_fact_1997.product_id = product.product_id\n" +
-          "   and ((\n" +
-          "           store.store_country         = 'USA'\n" +
-          "       and store.first_opened_date = '1979-04-13'\n" +
-          "       and store.last_remodel_date = '1982-01-30 00:00:00'\n" +
-          "       )\n" +
-          "    or (\n" +
-          "         store.store_city          = 'San Diego'\n" +
-          "     and store.store_state         = 'CA'\n" +
-          "       )\n" +
-          "    or (\n" +
-          "         store.store_state         = 'WA'\n" +
-          "     and store.store_sqft          > 50000\n" +
-          "     and product.gross_weight      = 17.1\n" +
-          "       )\n" +
-          "    or (\n" +
-          "         store.store_sqft is null\n" +
-          "       )\n" +
-          "    )\n" )
-      .rows( "39329.0" )
+        "select sum(sales_fact_1997.unit_sales) as m0\n"
+          + "  from store store\n"
+          + "     , product product\n"
+          + "     , sales_fact_1997 sales_fact_1997\n"
+          + " where sales_fact_1997.store_id  = store.store_id\n"
+          + "   and sales_fact_1997.product_id = product.product_id\n"
+          + "   and ((\n"
+          + "           store.store_country     = 'USA'\n"
+          + "       and store.first_opened_date = '1981-01-03'\n"
+          + "       and store.last_remodel_date = '1991-03-13 00:00:00'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_city          = 'San Diego'\n"
+          + "     and store.store_state         = 'CA'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_state         = 'WA'\n"
+          + "     and store.store_sqft          > 50000\n"
+          + "     and product.gross_weight      = 17.1\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_sqft is null\n"
+          + "       )\n"
+          + "    )\n" )
+      .rows( "60662.0" )
       .build();
     sqlContext.verify( expectation );
 
+  }
+
+  @Test
+  public void testCompoundPredicateNoJoinsDateLiteralSyntax() throws Exception {
+    SqlContext.defaultContext().verify( SqlExpectation.newBuilder()
+      .query(
+        "select sum(store.store_sqft) as m0\n"
+          + "  from store store\n"
+          + " where (\n"
+          + "         store.store_country     = 'USA'\n"
+          + "     and store.first_opened_date = '1981-01-03'\n"
+          + "     and store.last_remodel_date = '1991-03-13 00:00:00'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_city        = 'San Diego'\n"
+          + "     and store.store_state       = 'CA'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_state       = 'WA'\n"
+          + "     and store.store_sqft        > 30000\n"
+          + "       )\n"
+          + "    or ( store.store_sqft is null)\n" )
+      .rows( "127510" )
+      .build() );
+  }
+
+  @Test
+  public void testCompoundPredicateNoJoinsDateTypeSyntax() throws Exception {
+    SqlContext.defaultContext().verify( SqlExpectation.newBuilder()
+      .query(
+        "select sum(store.store_sqft) as m0\n"
+          + "  from store store\n"
+          + " where (\n"
+          + "         store.store_country     = 'USA'\n"
+          + "     and store.first_opened_date = DATE '1981-01-03'\n"
+          + "     and store.last_remodel_date = TIMESTAMP '1991-03-13 00:00:00'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_city        = 'San Diego'\n"
+          + "     and store.store_state       = 'CA'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_state       = 'WA'\n"
+          + "     and store.store_sqft        > 30000\n"
+          + "       )\n"
+          + "    or ( store.store_sqft is null)\n" )
+      .rows( "127510" )
+      .build() );
+  }
+
+  @Test
+  public void testCompoundPredicateNoJoinsTimestampCastSyntax() throws Exception {
+    SqlContext.defaultContext().verify( SqlExpectation.newBuilder()
+      .query(
+        "select sum(store.store_sqft) as m0\n"
+          + "  from store store\n"
+          + " where (\n"
+          + "         store.store_country     = 'USA'\n"
+          + "     and store.first_opened_date = cast('1981-01-03' as timestamp)\n"
+          + "     and store.last_remodel_date = cast('1991-03-13 00:00:00' as timestamp)\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_city        = 'San Diego'\n"
+          + "     and store.store_state       = 'CA'\n"
+          + "       )\n"
+          + "    or (\n"
+          + "         store.store_state       = 'WA'\n"
+          + "     and store.store_sqft        > 30000\n"
+          + "       )\n"
+          + "    or ( store.store_sqft is null)\n" )
+      .rows( "127510" )
+      .build() );
   }
 }
