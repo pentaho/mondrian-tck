@@ -28,7 +28,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.concurrent.ExecutionException;
 
-import com.google.common.base.Function;
 import mondrian.olap.MondrianProperties;
 import mondrian.rolap.RolapUtil;
 
@@ -68,33 +67,10 @@ public class SqlContext extends Context {
   }
 
   public void verify( SqlExpectation expectation ) throws Exception {
-    final Statement statement = connection.createStatement();
-    for ( Function<Statement, Void> statementModifier : expectation.statementModifiers ) {
-      statementModifier.apply( statement );
-    }
-    try {
-      statement.execute( expectation.query );
-    } catch ( Throwable t ) {
-      throw new Exception( "Query failed to run successfully.", t );
-    }
+    try ( final Statement statement = connection.createStatement() ) {
+      final ResultSet rs = expectation.query.getData( statement );
 
-    final ResultSet rs = statement.getResultSet();
-
-    try {
       expectation.verify( rs );
-    } finally {
-      try {
-        rs.close();
-      } catch ( Exception e ) {
-        // no op.
-        e.printStackTrace();
-      }
-      try {
-        statement.close();
-      } catch ( Exception e ) {
-        // no op.
-        e.printStackTrace();
-      }
     }
   }
 }

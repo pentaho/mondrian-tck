@@ -35,17 +35,19 @@ import static org.junit.Assert.*;
 
 public class SqlExpectation {
 
-  final String query;
+  final ResultSetProvider query;
   final String[] columns;
+  final boolean columnsPartial;
   final String[] rows;
   final boolean partial;
   final int[] types;
   List<Function<Statement, Void>> statementModifiers;
 
-  public SqlExpectation( String query, String[] columns, int[] types, String[] rows, boolean partial,
-                         final List<Function<Statement, Void>> statementModifiers ) {
+  public SqlExpectation( ResultSetProvider query, String[] columns, boolean columnsPartial, int[] types, String[] rows,
+                         boolean partial, final List<Function<Statement, Void>> statementModifiers ) {
     this.query = query;
     this.columns = columns;
+    this.columnsPartial = columnsPartial;
     this.types = types;
     this.rows = rows;
     this.partial = partial;
@@ -63,17 +65,27 @@ public class SqlExpectation {
     if ( columns == null ) {
       return;
     }
-    assertArrayEquals(
-      "Column names do not correspond to those expected.",
-      columns,
-      rsToColumns( rs ) );
+    // some drivers return lower case, some - upper.
+    final String[] actuals = rsToColumns( rs, true );
+    if ( columnsPartial ) {
+      for ( String column : columns ) {
+        assertTrue( String.format( "Column '%s' doesn't exist in the columns result set '%s'", column,
+            Arrays.toString( actuals ) ), Arrays.asList( actuals ).contains( column.toLowerCase() ) );
+      }
+    } else {
+      assertArrayEquals(
+          "Column names do not correspond to those expected.",
+          columns,
+          actuals );
+    }
   }
 
-  private String[] rsToColumns( ResultSet rs ) throws Exception {
+  private String[] rsToColumns( ResultSet rs, boolean lowerCase ) throws Exception {
     final List<String> effectiveCols = new ArrayList<>();
     final ResultSetMetaData rsm = rs.getMetaData();
     for ( int i = 1; i <= rsm.getColumnCount(); i++ ) {
-      effectiveCols.add( rsm.getColumnName( i ) );
+      final String columnName = rsm.getColumnName( i );
+      effectiveCols.add( lowerCase ? columnName.toLowerCase() : columnName );
     }
     return effectiveCols.toArray( new String[ effectiveCols.size() ] );
   }
@@ -107,7 +119,7 @@ public class SqlExpectation {
         }
 
         // Print the value to the buffer.
-        curRow.append( String.valueOf( rawValue.toString() ) );
+        curRow.append( String.valueOf( rawValue ) );
       }
 
       // Now validate that row
@@ -150,6 +162,10 @@ public class SqlExpectation {
   }
 
   private void validateType( String colName, Object actual, int expected ) throws Exception {
+    // skip null value
+    if ( actual == null ) {
+      return;
+    }
     switch ( expected ) {
       case java.sql.Types.BIGINT:
         checkType( colName, "Long", actual.getClass(), Long.class );
@@ -164,15 +180,21 @@ public class SqlExpectation {
         break;
 
       case java.sql.Types.INTEGER:
+      case java.sql.Types.SMALLINT:
         checkType( colName, "Integer", actual.getClass(), Integer.class );
         break;
 
       case java.sql.Types.VARCHAR:
+      case java.sql.Types.CHAR:
         checkType( colName, "String", actual.getClass(), String.class );
         break;
 
       case java.sql.Types.DOUBLE:
         checkType( colName, "Double", actual.getClass(), Double.class );
+        break;
+
+      case java.sql.Types.OTHER:
+        // don't verify
         break;
 
       default:
@@ -192,8 +214,9 @@ public class SqlExpectation {
   }
 
   public static class Builder {
-    private String query;
+    private ResultSetProvider query;
     private String[] columns;
+    private boolean columnsPartial;
     private String[] rows;
     private int[] types;
     private boolean partial = false;
@@ -203,12 +226,35 @@ public class SqlExpectation {
     }
 
     /**
+     * Sets the {@link ResultSetProvider} to run.
+     * <p>(mandatory)
+     */
+    public Builder query( ResultSetProvider query ) {
+      this.query = query;
+      return this;
+    }
+
+    /**
      * Sets the SQL query to run.
      * <p>(mandatory)
      */
-    public Builder query( String query ) {
-      this.query = query;
-      return this;
+    public Builder query( final String query ) {
+      return query( new ResultSetProvider() {
+        @Override
+        public ResultSet getData( Statement statement ) throws Exception {
+          for ( Function<Statement, Void> statementModifier : statementModifiers ) {
+            statementModifier.apply( statement );
+          }
+
+          try {
+            statement.execute( query );
+          } catch ( Throwable t ) {
+            throw new Exception( "Query failed to run successfully.", t );
+          }
+
+          return statement.getResultSet();
+        }
+      } );
     }
 
     /**
@@ -217,6 +263,16 @@ public class SqlExpectation {
      */
     public Builder columns( String... columns ) {
       this.columns = columns;
+      return this;
+    }
+
+    /**
+     * Sets whether the columns provided in {@link #columns(String[])} are only the
+     * part of the columns of the result set.
+     * <p>(optional)
+     */
+    public Builder columnsPartial() {
+      this.columnsPartial = true;
       return this;
     }
 
@@ -256,7 +312,11 @@ public class SqlExpectation {
     }
 
     public SqlExpectation build() {
-      return new SqlExpectation( query, columns, types, rows, partial, statementModifiers );
+      return new SqlExpectation( query, columns, columnsPartial, types, rows, partial, statementModifiers );
     }
+  }
+
+  public interface ResultSetProvider {
+    ResultSet getData( Statement statement ) throws Exception;
   }
 }
