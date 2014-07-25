@@ -97,4 +97,12 @@ public class SqlContext extends Context {
       }
     }
   }
+  
+  public void executeJDBCCode(IJDBCExecutable exec)throws Exception{
+    exec.executeCode( connection );
+  }
+  
+  public interface IJDBCExecutable{
+    public void executeCode( Connection conn) throws Exception;
+  }
 }
