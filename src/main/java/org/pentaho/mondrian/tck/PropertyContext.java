@@ -36,8 +36,11 @@ public class PropertyContext {
 
   public void execute( Runnable runnable ) {
     Map<Property, String> oldValues = set( properties );
-    runnable.run();
-    set( oldValues );
+    try {
+      runnable.run();
+    } finally {
+      set( oldValues );
+    }
   }
 
   private Map<Property, String> set( final Map<Property, String> newValues ) {
