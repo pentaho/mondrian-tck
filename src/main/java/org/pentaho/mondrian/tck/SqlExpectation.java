@@ -193,6 +193,10 @@ public class SqlExpectation {
         checkType( colName, "Double", actual.getClass(), Double.class );
         break;
 
+      case java.sql.Types.TINYINT:
+        checkType( colName, "Byte", actual.getClass(), Byte.class );
+        break;
+
       case java.sql.Types.OTHER:
         // don't verify
         break;
