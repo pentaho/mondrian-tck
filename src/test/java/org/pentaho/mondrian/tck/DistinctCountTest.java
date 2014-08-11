@@ -19,7 +19,7 @@
  * confidentiality and non-disclosure agreements or other agreements with Pentaho,
  * explicitly covering such access.
  */
- package org.pentaho.mondrian.tck;
+package org.pentaho.mondrian.tck;
 
 import java.sql.ResultSet;
 import java.sql.Statement;

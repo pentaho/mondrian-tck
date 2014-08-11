@@ -164,8 +164,8 @@ public class NativeFilterTest {
   public void testCompoundSlicerAtDifferentLevels() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
       .query(
-        "select [Measures].[Customer Count] on 0 from sales " +
-          "where ({[Store].[USA].[WA],[Store].[USA].[CA].[San Diego],[Store].[Mexico]})" )
+        "select [Measures].[Customer Count] on 0 from sales "
+        + "where ({[Store].[USA].[WA],[Store].[USA].[CA].[San Diego],[Store].[Mexico]})" )
       .result(
         "Axis #0:\n"
           + "{[Store].[USA].[WA]}\n"
