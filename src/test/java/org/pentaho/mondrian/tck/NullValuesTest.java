@@ -36,11 +36,11 @@ public class NullValuesTest {
    * Result null value as string
    */
   private static final String NULL_VALUE = "null";
-  
+
   /**
    * Mondrian schema for check queries with null values
    */
-  private static final String SCHEMA = 
+  private static final String SCHEMA =
       "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Account\">"
       + "    <Table name=\"account\"></Table>"
@@ -63,7 +63,7 @@ public class NullValuesTest {
    * Result array parent's id for query with ordering
    */
   private String[] accountParentIds = {NULL_VALUE, NULL_VALUE, NULL_VALUE, "3000", "3000", "4000", "4000", "4000", "4000", "5000", "5000"};
-  
+
   /**
    * Verifies MDX for select account parent by null key
    */
@@ -138,7 +138,7 @@ public class NullValuesTest {
 
     SqlContext.defaultContext().verify( expectation );
   }
-  
+
   /**
    * Verifies order query by ascending with null values at last
    */
@@ -154,7 +154,7 @@ public class NullValuesTest {
 
     SqlContext.defaultContext().verify( expectation );
   }
-  
+
   /**
    * Verifies order query by descending with null values at first
    */
@@ -170,7 +170,7 @@ public class NullValuesTest {
 
     SqlContext.defaultContext().verify( expectation );
   }
-  
+
   /**
    * Verifies order query by descending with null values at last
    */
@@ -186,7 +186,7 @@ public class NullValuesTest {
 
     SqlContext.defaultContext().verify( expectation );
   }
-  
+
   /**
    * A comparison function for ordering on some collection of objects string with null values. The function has custom
    * comparator for null and "null" values
