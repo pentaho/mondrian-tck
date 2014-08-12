@@ -30,6 +30,8 @@ import java.util.concurrent.ExecutionException;
 
 import mondrian.olap.MondrianProperties;
 import mondrian.rolap.RolapUtil;
+import mondrian.spi.Dialect;
+import mondrian.spi.DialectManager;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -72,5 +74,9 @@ public class SqlContext extends Context {
 
       expectation.verify( rs );
     }
+  }
+  
+  public Dialect getDialect() {
+    return DialectManager.createDialect( null, connection );
   }
 }

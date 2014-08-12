@@ -23,11 +23,13 @@ package org.pentaho.mondrian.tck;
 
 import static org.pentaho.mondrian.tck.SqlExpectation.newBuilder;
 
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
+import mondrian.spi.Dialect;
+
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class NullValuesTest {
@@ -53,22 +55,34 @@ public class NullValuesTest {
       + "    <Dimension name=\"account custom member\">\n"
       + "      <Hierarchy hasAll=\"true\" primaryKey=\"account_id\">\n"
       + "        <Table name=\"account\"/>\n"
-      + "        <Level name=\"custom member\" column=\"custom_members\" uniqueMembers=\"false\"/>\n"
+      + "        <Level name=\"custom member\" column=\"Custom_Members\" uniqueMembers=\"false\"/>\n"
       + "      </Hierarchy>\n"
       + "    </Dimension>"
       + "  </Cube>"
       + "</Schema>";
+
+  private static final String ACCOUNT_TABLE_NAME = "account";
+
+  private static final String ORDERED_COLUMN_NAME = "account_parent";
 
   /**
    * Result array parent's id for query with ordering
    */
   private String[] accountParentIds = {NULL_VALUE, NULL_VALUE, NULL_VALUE, "3000", "3000", "4000", "4000", "4000", "4000", "5000", "5000"};
 
+  private static Dialect dialect;
+
+  @BeforeClass
+  public static void setUp() throws Exception {
+    dialect = SqlContext.defaultContext().getDialect();
+  }
+
   /**
    * Verifies MDX for select account parent by null key
    */
   @Test
   public void testSelectMembersWithNullKey() throws Exception {
+    String orderExpr = getOrderExpression( "alias", "account.account_parent", true, true, true );
     MondrianExpectation expectation =
         MondrianExpectation.newBuilder()
             .query( "SELECT [account].[account].[account parent].[#null] on 0 FROM Account" )
@@ -80,13 +94,13 @@ public class NullValuesTest {
                     + "Row #0: 3\n" )
             .sql(
                 "select\n"
-                    + "    account.account_parent as c0\n"
+                    + "    " + dialect.quoteIdentifier( "account.account_parent" ) +" as " + dialect.quoteIdentifier( "c0" ) +"\n"
                     + "from\n"
-                    + "    account account\n"
+                    + "    " + dialect.quoteIdentifier( "account" ) + " " + dialect.quoteIdentifier( "account" ) + "\n"
                     + "group by\n"
-                    + "    account.account_parent\n"
+                    + "    " + dialect.quoteIdentifier( "account.account_parent" ) + "\n"
                     + "order by\n"
-                    + "    CASE WHEN account.account_parent IS NULL THEN 1 ELSE 0 END, account.account_parent ASC" )
+                    + "    " + orderExpr)
             .build();
     MondrianContext.forCatalog( SCHEMA ).verify( expectation );
   }
@@ -96,6 +110,7 @@ public class NullValuesTest {
    */
   @Test
   public void testOrderMembersByNullValues() throws Exception {
+    String orderExpr = getOrderExpression( "alias", "account.Custom_Members", true, true, true );
     MondrianExpectation expectation =
         MondrianExpectation
             .newBuilder()
@@ -110,15 +125,15 @@ public class NullValuesTest {
                     + "Row #0: 10\n" + "Row #0: 1\n" )
             .sql(
                 "select\n"
-                    + "    account.custom_members c0\n"
+                    + "    " + dialect.quoteIdentifier( "account.Custom_Members" ) + " " + dialect.quoteIdentifier( "c0" ) + "\n"
                     + "from\n"
-                    + "    account account\n"
+                    + "    " + dialect.quoteIdentifier( "account" ) + " " + dialect.quoteIdentifier( "account" ) + "\n"
                     + "where\n"
-                    + "    UPPER(account.custom_members) = UPPER('account custom member')\n"
+                    + "    UPPER(" + dialect.quoteIdentifier( "account.Custom_Members" ) + ") = UPPER('account custom member')\n"
                     + "group by\n"
-                    + "    account.custom_members\n"
+                    + "    " + dialect.quoteIdentifier( "account.Custom_Members" ) + "\n"
                     + "order by\n"
-                    + "    CASE WHEN account.custom_members IS NULL THEN 1 ELSE 0 END, account.custom_members ASC" )
+                    + "    " + orderExpr)
             .build();
     MondrianContext.forCatalog( SCHEMA ).verify( expectation );
   }
@@ -129,14 +144,7 @@ public class NullValuesTest {
   @Test
   public void testOrderMembersAscWithNullFirst() throws Exception {
     Arrays.sort( accountParentIds, new StringWithNullComparator() );
-    final SqlExpectation expectation = newBuilder()
-        .query( "select account.account_parent account_parent from account order by CASE WHEN account.account_parent IS NULL THEN 0 ELSE 1 END, account.account_parent ASC" )
-        .columns( "account_parent" )
-        .types( Types.INTEGER )
-        .rows( accountParentIds )
-        .build();
-
-    SqlContext.defaultContext().verify( expectation );
+    testOrderQuery( true, false );
   }
 
   /**
@@ -145,14 +153,7 @@ public class NullValuesTest {
   @Test
   public void testOrderMembersAscWithNullLast() throws Exception {
     Arrays.sort( accountParentIds, new StringWithNullComparator( false ) );
-    final SqlExpectation expectation = newBuilder()
-        .query( "select account.account_parent account_parent from account order by CASE WHEN account.account_parent IS NULL THEN 1 ELSE 0 END, account.account_parent ASC" )
-        .columns( "account_parent" )
-        .types( Types.INTEGER )
-        .rows( accountParentIds )
-        .build();
-
-    SqlContext.defaultContext().verify( expectation );
+    testOrderQuery( true, true );
   }
 
   /**
@@ -161,14 +162,7 @@ public class NullValuesTest {
   @Test
   public void testOrderMembersDescWithNullFirst() throws Exception {
     Arrays.sort( accountParentIds, Collections.reverseOrder( new StringWithNullComparator() ) );
-    final SqlExpectation expectation = newBuilder()
-        .query( "select account.account_parent account_parent from account order by CASE WHEN account.account_parent IS NULL THEN 0 ELSE 1 END, account.account_parent DESC" )
-        .columns( "account_parent" )
-        .types( Types.INTEGER )
-        .rows( accountParentIds )
-        .build();
-
-    SqlContext.defaultContext().verify( expectation );
+    testOrderQuery( false, false );
   }
 
   /**
@@ -177,14 +171,7 @@ public class NullValuesTest {
   @Test
   public void testOrderMembersDescWithNullLast() throws Exception {
     Arrays.sort( accountParentIds, Collections.reverseOrder( new StringWithNullComparator( false ) ) );
-    final SqlExpectation expectation = newBuilder()
-        .query( "select account.account_parent account_parent from account order by CASE WHEN account.account_parent IS NULL THEN 1 ELSE 0 END, account.account_parent DESC" )
-        .columns( "account_parent" )
-        .types( Types.INTEGER )
-        .rows( accountParentIds )
-        .build();
-
-    SqlContext.defaultContext().verify( expectation );
+    testOrderQuery( false, true );
   }
 
   /**
@@ -214,5 +201,33 @@ public class NullValuesTest {
       return o1.compareTo( o2 );
     }
 
+  }
+
+  private void testOrderQuery( boolean ascending, boolean collateNullsLast ) throws Exception {
+    String orderExpr = getOrderExpression( "alias", ORDERED_COLUMN_NAME, true, ascending, collateNullsLast );
+    final SqlExpectation expectation = newBuilder()
+        .query( generateSelectQuery( ORDERED_COLUMN_NAME, ACCOUNT_TABLE_NAME, orderExpr ) )
+        .columns( ORDERED_COLUMN_NAME )
+        .rows( accountParentIds )
+        .build();
+    SqlContext.defaultContext().verify( expectation );
+  }
+
+  private String generateSelectQuery( String selectParam, String fromParam, String orderExpr ) {
+    StringBuilder query = new StringBuilder( "select " );
+    query.append( dialect.quoteIdentifier( selectParam ) );
+    query.append( " from " );
+    query.append( dialect.quoteIdentifier( fromParam ) );
+    query.append( " order by " );
+    query.append( orderExpr );
+    return query.toString();
+  }
+
+  private String getOrderExpression( String alias, String expr, boolean nullable, boolean ascending,
+      boolean collateNullsLast ) {
+    String orderExpr =
+        dialect.generateOrderItem( dialect.requiresOrderByAlias() ? dialect.quoteIdentifier( alias ) : dialect
+            .quoteIdentifier( expr ), nullable, ascending, collateNullsLast );
+    return orderExpr;
   }
 }
