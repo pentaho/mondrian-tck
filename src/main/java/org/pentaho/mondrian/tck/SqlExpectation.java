@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.sql.Types;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -119,7 +121,14 @@ public class SqlExpectation {
         }
 
         // Print the value to the buffer.
-        curRow.append( String.valueOf( rawValue ) );
+        switch ( rs.getMetaData().getColumnType( j ) ) {
+          case Types.DOUBLE:
+          case Types.DECIMAL:
+            curRow.append( new DecimalFormat().format( rawValue ) );
+            break;
+          default:
+            curRow.append( String.valueOf( rawValue ) );
+        }
       }
 
       // Now validate that row
@@ -206,7 +215,7 @@ public class SqlExpectation {
     }
   }
 
-  private void checkType( String colName, String expectedType, Class actualTypeClass, Class... expectedTypeClass ) {
+  private void checkType( String colName, String expectedType, Class<?> actualTypeClass, Class<?>... expectedTypeClass ) {
     assertTrue(
         "Wrong type for column " + colName
             + ", expected type " + expectedType + " but object class was " + actualTypeClass.getName(),

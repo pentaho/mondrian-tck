@@ -75,7 +75,7 @@ public class SqlContext extends Context {
       expectation.verify( rs );
     }
   }
-  
+
   public Dialect getDialect() {
     return DialectManager.createDialect( null, connection );
   }

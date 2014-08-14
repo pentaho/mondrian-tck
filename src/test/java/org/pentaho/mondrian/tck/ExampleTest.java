@@ -27,11 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 
-@SuppressWarnings( "UnusedDeclaration" )
 public class ExampleTest {
   private static final Logger logger = LoggerFactory.getLogger( ExampleTest.class );
 
-  @SuppressWarnings( "UnusedDeclaration" )
   public void testExampleSelectFromSales() throws Exception {
     final MondrianExpectation expectation =
       newBuilder()
@@ -57,7 +55,6 @@ public class ExampleTest {
     context.verify( expectation );
   }
 
-  @SuppressWarnings( "UnusedDeclaration" )
   public void testExampleOverrideProperties() throws Exception {
     new PropertyContext()
       .withProperty( MondrianProperties.instance().ResultLimit, "5" )
