@@ -41,8 +41,7 @@ public class AggregationTest {
     final SqlExpectation expectation = newBuilder()
         .query( "select sum(unit_sales) sum_sales from sales_fact_1997" )
         .columns( "sum_sales" )
-        .types( Types.DOUBLE )
-        .rows( String.valueOf( 266773.0 ) )
+        .rows( "266,773" )
         .build();
 
     // Validate
@@ -67,8 +66,7 @@ public class AggregationTest {
     final SqlExpectation expectation = newBuilder()
         .query( "select min(unit_sales) min_sales from sales_fact_1997" )
         .columns( "min_sales" )
-        .types( Types.DOUBLE )
-        .rows( String.valueOf( 1.0 ) )
+        .rows( "1" )
         .build();
 
     // Validate
@@ -94,8 +92,7 @@ public class AggregationTest {
     final SqlExpectation expectation = newBuilder()
         .query( "select max(unit_sales) max_sales from sales_fact_1997" )
         .columns( "max_sales" )
-        .types( Types.DOUBLE )
-        .rows( String.valueOf( 6.0 ) )
+        .rows( "6" )
         .build();
 
     // Validate
@@ -196,7 +193,7 @@ public class AggregationTest {
             + "from sales_fact_1997" )
         .columns( "count_sales", "count_store_id" )
         .types( Types.BIGINT, Types.BIGINT )
-        .rows( String.valueOf( 6 ), String.valueOf( 13 ) )
+        .rows( "6|13" )
         .build();
 
     // Validate
@@ -227,8 +224,7 @@ public class AggregationTest {
     final SqlExpectation expectation = newBuilder()
         .query( "select avg(unit_sales) avg_sales from sales_fact_1997" )
         .columns( "avg_sales" )
-        .types( Types.DOUBLE )
-        .rows( String.valueOf( 3.0721121181063373 ) )
+        .rows( String.valueOf( 3.072 ) )
         .build();
 
     // Validate

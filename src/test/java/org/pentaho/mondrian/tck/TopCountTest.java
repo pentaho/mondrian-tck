@@ -22,6 +22,7 @@
 package org.pentaho.mondrian.tck;
 
 import com.google.common.base.Function;
+
 import org.junit.Test;
 
 import java.sql.SQLException;
@@ -29,7 +30,8 @@ import java.sql.Statement;
 
 import static org.junit.Assert.fail;
 
-public class TopCountTest {
+public class TopCountTest extends TestBase {
+
   @Test
   public void testSetMaxRows() throws Exception {
     SqlContext sqlContext = SqlContext.defaultContext();
@@ -46,7 +48,7 @@ public class TopCountTest {
           return null;
         }
       } )
-      .rows( "6.0", "6.0" )
+      .rows( "6", "6" )
       .build();
     sqlContext.verify( sqlExpectation );
   }
@@ -83,9 +85,9 @@ public class TopCountTest {
           + "    sales_fact_1997 sales_fact_1997\n"
           + "group by\n"
           + "    sales_fact_1997.customer_id\n"
-          + "order by\n"
-          + "    CASE WHEN sum(sales_fact_1997.unit_sales) IS NULL THEN 1 ELSE 0 END, sum(sales_fact_1997.unit_sales) DESC,\n"
-          + "    CASE WHEN sales_fact_1997.customer_id IS NULL THEN 1 ELSE 0 END, sales_fact_1997.customer_id ASC" )
+          + "order by"
+          + "\n    " + getOrderExpression( "c0", "sum(sales_fact_1997.unit_sales)", true, false, true )
+          + ",\n    " + getOrderExpression( "c1", "sales_fact_1997.customer_id", true, true, true ) )
       .build();
     MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER ).verify( expectation );
   }

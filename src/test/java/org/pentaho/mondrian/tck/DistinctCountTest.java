@@ -44,7 +44,7 @@ public class DistinctCountTest {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
       .query( "select count(distinct(customer_id)), count(distinct(product_id))  from sales_fact_1997" )
-      .rows( "5581", "1559" )
+      .rows( "5581|1559" )
       .build();
     sqlContext.verify( sqlExpectation );
   }
@@ -74,7 +74,7 @@ public class DistinctCountTest {
         .query( new SqlExpectation.ResultSetProvider() {
           @Override
           public ResultSet getData( Statement statement ) throws Exception {
-            return statement.getConnection().getMetaData().getIndexInfo( statement.getConnection().getCatalog(), null, "sales_fact_1997", false, false );
+            return statement.getConnection().getMetaData().getIndexInfo( statement.getConnection().getCatalog(), null, "product", false, false );
           }
         } )
 
@@ -84,7 +84,7 @@ public class DistinctCountTest {
         .types( Types.CHAR, Types.CHAR, Types.CHAR, Types.BOOLEAN, Types.CHAR, Types.CHAR, Types.SMALLINT,
             Types.SMALLINT, Types.CHAR, Types.CHAR, Types.INTEGER, Types.INTEGER, Types.CHAR )
 
-        .rows( "foodmart|null|sales_fact_1997|true||i_sls_97_cust_id|3|1|customer_id|A|9652|0|null" )
+        .rows( "foodmart|null|product|false||i_product_id|3|1|product_id|A|1560|0|null" )
 
         .partial()
         .build();

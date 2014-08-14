@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import static org.pentaho.mondrian.tck.FoodMartCatalogs.*;
 
-public class NativeFilterTest {
+public class NativeFilterTest extends TestBase {
 
   @Test
   public void testHavingClause() throws Exception {
@@ -59,7 +59,7 @@ public class NativeFilterTest {
           + "having\n"
           + "    (sum(sales_fact_1997.unit_sales) > 500)\n"
           + "order by\n"
-          + "    CASE WHEN sales_fact_1997.customer_id IS NULL THEN 1 ELSE 0 END, sales_fact_1997.customer_id ASC" )
+          + "    " + getOrderExpression( "c0", "sales_fact_1997.customer_id", true, true, true ) )
       .build();
     MondrianContext.forCatalog( FLAT_WITH_CUSTOMER ).verify( expectation );
   }
@@ -107,10 +107,10 @@ public class NativeFilterTest {
           + "    store.store_city\n"
           + "having\n"
           + "    (sum(sales_fact_1997.unit_sales) > 20000)\n"
-          + "order by\n"
-          + "    CASE WHEN store.store_country IS NULL THEN 1 ELSE 0 END, store.store_country ASC,\n"
-          + "    CASE WHEN store.store_state IS NULL THEN 1 ELSE 0 END, store.store_state ASC,\n"
-          + "    CASE WHEN store.store_city IS NULL THEN 1 ELSE 0 END, store.store_city ASC" )
+          + "order by"
+          + "\n    " + getOrderExpression( "c0", "store.store_country", true, true, true )
+          + ",\n    " + getOrderExpression( "c1", "store.store_state", true, true, true )
+          + ",\n    " + getOrderExpression( "c2", "store.store_city", true, true, true ) )
       .build();
     MondrianContext.forCatalog( STAR_WITH_STORE ).verify( expectation );
   }
@@ -152,10 +152,9 @@ public class NativeFilterTest {
           + "    product_class.product_department\n"
           + "having\n"
           + "    (sum(sales_fact_1997.unit_sales) > 20000)\n"
-          + "order by\n"
-          + "    CASE WHEN product_class.product_family IS NULL THEN 1 ELSE 0 END, product_class.product_family ASC,\n"
-          + "    CASE WHEN product_class.product_department IS NULL THEN 1 ELSE 0 END, "
-          + "product_class.product_department ASC" )
+          + "order by"
+          + "\n    " + getOrderExpression( "c0", "product_class.product_family", true, true, true )
+          + ",\n    " + getOrderExpression( "c1", "product_class.product_department", true, true, true ) )
       .build();
     MondrianContext.forCatalog( SNOWFLAKE_WITH_PRODUCT ).verify( expectation );
   }
@@ -203,16 +202,16 @@ public class NativeFilterTest {
           + " where sales_fact_1997.store_id  = store.store_id\n"
           + "   and sales_fact_1997.product_id = product.product_id\n"
           + "   and ((\n"
-          + "           store.store_country     = 'USA'\n"
-          + "       and store.first_opened_date = '1981-01-03'\n"
-          + "       and store.last_remodel_date = '1991-03-13 00:00:00'\n"
+          + "           store.store_country     = " + quoteString( "USA" ) + "\n"
+          + "       and store.first_opened_date = " + quoteDate( "1981-01-03" ) + "\n"
+          + "       and store.last_remodel_date = " + quoteTimestamp( "1991-03-13 00:00:00" ) + "\n"
           + "       )\n"
           + "    or (\n"
-          + "         store.store_city          = 'San Diego'\n"
-          + "     and store.store_state         = 'CA'\n"
+          + "         store.store_city          = " + quoteString( "San Diego" ) + "\n"
+          + "     and store.store_state         = " + quoteString( "CA" ) + "\n"
           + "       )\n"
           + "    or (\n"
-          + "         store.store_state         = 'WA'\n"
+          + "         store.store_state         = " + quoteString( "WA" ) + "\n"
           + "     and store.store_sqft          > 50000\n"
           + "     and product.gross_weight      = 17.1\n"
           + "       )\n"
@@ -220,7 +219,7 @@ public class NativeFilterTest {
           + "         store.store_sqft is null\n"
           + "       )\n"
           + "    )\n" )
-      .rows( "60662.0" )
+      .rows( "60,662" )
       .build();
     sqlContext.verify( expectation );
 
@@ -233,68 +232,20 @@ public class NativeFilterTest {
         "select sum(store.store_sqft) as m0\n"
           + "  from store store\n"
           + " where (\n"
-          + "         store.store_country     = 'USA'\n"
-          + "     and store.first_opened_date = '1981-01-03'\n"
-          + "     and store.last_remodel_date = '1991-03-13 00:00:00'\n"
+          + "           store.store_country     = " + quoteString( "USA" ) + "\n"
+          + "       and store.first_opened_date = " + quoteDate( "1981-01-03" ) + "\n"
+          + "       and store.last_remodel_date = " + quoteTimestamp( "1991-03-13 00:00:00" ) + "\n"
           + "       )\n"
           + "    or (\n"
-          + "         store.store_city        = 'San Diego'\n"
-          + "     and store.store_state       = 'CA'\n"
+          + "         store.store_city        = " + quoteString( "San Diego" ) + "\n"
+          + "     and store.store_state       = " + quoteString( "CA" ) + "\n"
           + "       )\n"
           + "    or (\n"
-          + "         store.store_state       = 'WA'\n"
+          + "         store.store_state       = " + quoteString( "WA" ) + "\n"
           + "     and store.store_sqft        > 30000\n"
           + "       )\n"
           + "    or ( store.store_sqft is null)\n" )
-      .rows( "127510" )
-      .build() );
-  }
-
-  @Test
-  public void testCompoundPredicateNoJoinsDateTypeSyntax() throws Exception {
-    SqlContext.defaultContext().verify( SqlExpectation.newBuilder()
-      .query(
-        "select sum(store.store_sqft) as m0\n"
-          + "  from store store\n"
-          + " where (\n"
-          + "         store.store_country     = 'USA'\n"
-          + "     and store.first_opened_date = DATE '1981-01-03'\n"
-          + "     and store.last_remodel_date = TIMESTAMP '1991-03-13 00:00:00'\n"
-          + "       )\n"
-          + "    or (\n"
-          + "         store.store_city        = 'San Diego'\n"
-          + "     and store.store_state       = 'CA'\n"
-          + "       )\n"
-          + "    or (\n"
-          + "         store.store_state       = 'WA'\n"
-          + "     and store.store_sqft        > 30000\n"
-          + "       )\n"
-          + "    or ( store.store_sqft is null)\n" )
-      .rows( "127510" )
-      .build() );
-  }
-
-  @Test
-  public void testCompoundPredicateNoJoinsTimestampCastSyntax() throws Exception {
-    SqlContext.defaultContext().verify( SqlExpectation.newBuilder()
-      .query(
-        "select sum(store.store_sqft) as m0\n"
-          + "  from store store\n"
-          + " where (\n"
-          + "         store.store_country     = 'USA'\n"
-          + "     and store.first_opened_date = cast('1981-01-03' as timestamp)\n"
-          + "     and store.last_remodel_date = cast('1991-03-13 00:00:00' as timestamp)\n"
-          + "       )\n"
-          + "    or (\n"
-          + "         store.store_city        = 'San Diego'\n"
-          + "     and store.store_state       = 'CA'\n"
-          + "       )\n"
-          + "    or (\n"
-          + "         store.store_state       = 'WA'\n"
-          + "     and store.store_sqft        > 30000\n"
-          + "       )\n"
-          + "    or ( store.store_sqft is null)\n" )
-      .rows( "127510" )
+      .rows( "127,510" )
       .build() );
   }
 }

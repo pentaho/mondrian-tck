@@ -22,10 +22,9 @@
 package org.pentaho.mondrian.tck;
 
 import static org.pentaho.mondrian.tck.SqlExpectation.newBuilder;
-import java.sql.Types;
 import org.junit.Test;
 
-public class InlineTablesTest {
+public class InlineTablesTest extends TestBase {
   @Test
   public void testInlineTable() throws Exception {
     final SqlExpectation expct =
@@ -39,9 +38,8 @@ public class InlineTablesTest {
           + "    alt_promotion.promo_id,\n"
           + "    alt_promotion.promo_name\n"
           + "order by\n"
-          + "    CASE WHEN alt_promotion.promo_id IS NULL THEN 1 ELSE 0 END, alt_promotion.promo_id ASC" )
+          + "    " + getOrderExpression( "c0", "alt_promotion.promo_id", true, true, true ) )
         .columns( "promo_id", "promo_name" )
-        .types( Types.TINYINT, Types.VARCHAR )
         .rows( "0|Promo0" )
         .partial()
         .build();
@@ -73,8 +71,7 @@ public class InlineTablesTest {
             + "    time_by_day.the_year,\n"
             + "    nation.nation_name" )
         .columns( "the_year", "nation_name", "sum_sales" )
-        .types( Types.INTEGER, Types.VARCHAR, Types.DOUBLE )
-        .rows( "1997|USA|266773.0" )
+        .rows( "1997|USA|266,773" )
         .partial()
         .build();
     SqlContext.defaultContext().verify( expct );
@@ -102,7 +99,7 @@ public class InlineTablesTest {
           + "    alt_promotion.promo_id,\n"
           + "    alt_promotion.promo_name\n"
           + "order by\n"
-          + "    CASE WHEN alt_promotion.promo_id IS NULL THEN 1 ELSE 0 END, alt_promotion.promo_id ASC" )
+          + "    " + getOrderExpression( "c0", "alt_promotion.promo_id", true, true, true ) )
         .sql( "select count(*) from (select distinct\n"
           + "    alt_promotion.promo_id c0\n"
           + "from\n"
@@ -174,7 +171,7 @@ public class InlineTablesTest {
           + "    alt_promotion.promo_id,\n"
           + "    alt_promotion.promo_name\n"
           + "order by\n"
-          + "    CASE WHEN alt_promotion.promo_id IS NULL THEN 1 ELSE 0 END, alt_promotion.promo_id ASC" )
+          + "    " + getOrderExpression( "c0", "alt_promotion.promo_id", true, true, true ) )
         .sql( "select count(*) from (select distinct\n"
             + "    alt_promotion.promo_id c0\n"
             + "from\n"
@@ -240,14 +237,6 @@ public class InlineTablesTest {
         + "Row #0: \n"
         + "Row #0: 266,773\n" )
       .sql( "select\n"
-        + "    time_by_day.the_year c0\n"
-        + "from\n"
-        + "    time_by_day time_by_day\n"
-        + "group by\n"
-        + "    time_by_day.the_year\n"
-        + "order by\n"
-        + "    CASE WHEN time_by_day.the_year IS NULL THEN 1 ELSE 0 END, time_by_day.the_year ASC" )
-      .sql( "select\n"
         + "    nation.nation_name c0,\n"
         + "    nation.nation_shortcode c1\n"
         + "from\n"
@@ -259,7 +248,7 @@ public class InlineTablesTest {
         + "    nation.nation_name,\n"
         + "    nation.nation_shortcode\n"
         + "order by\n"
-        + "    CASE WHEN nation.nation_name IS NULL THEN 1 ELSE 0 END, nation.nation_name ASC" )
+        + "    " + getOrderExpression( "c0", "nation.nation_name", true, true, true ) )
       .sql( "select count(distinct the_year) from time_by_day" )
       .sql( "select count(*) from (select distinct\n"
         + "    nation.nation_name c0\n"

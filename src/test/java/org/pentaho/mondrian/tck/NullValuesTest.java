@@ -27,12 +27,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
-import mondrian.spi.Dialect;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class NullValuesTest {
+public class NullValuesTest extends TestBase {
 
   /**
    * Result null value as string
@@ -70,13 +67,6 @@ public class NullValuesTest {
    */
   private String[] accountParentIds = {NULL_VALUE, NULL_VALUE, NULL_VALUE, "3000", "3000", "4000", "4000", "4000", "4000", "5000", "5000"};
 
-  private static Dialect dialect;
-
-  @BeforeClass
-  public static void setUp() throws Exception {
-    dialect = SqlContext.defaultContext().getDialect();
-  }
-
   /**
    * Verifies MDX for select account parent by null key
    */
@@ -94,13 +84,13 @@ public class NullValuesTest {
                     + "Row #0: 3\n" )
             .sql(
                 "select\n"
-                    + "    " + dialect.quoteIdentifier( "account.account_parent" ) +" as " + dialect.quoteIdentifier( "c0" ) +"\n"
+                    + "    " + dialect.quoteIdentifier( "account.account_parent" ) + " as " + dialect.quoteIdentifier( "c0" ) + "\n"
                     + "from\n"
                     + "    " + dialect.quoteIdentifier( "account" ) + " " + dialect.quoteIdentifier( "account" ) + "\n"
                     + "group by\n"
                     + "    " + dialect.quoteIdentifier( "account.account_parent" ) + "\n"
                     + "order by\n"
-                    + "    " + orderExpr)
+                    + "    " + orderExpr )
             .build();
     MondrianContext.forCatalog( SCHEMA ).verify( expectation );
   }
@@ -110,7 +100,6 @@ public class NullValuesTest {
    */
   @Test
   public void testOrderMembersByNullValues() throws Exception {
-    String orderExpr = getOrderExpression( "alias", "account.Custom_Members", true, true, true );
     MondrianExpectation expectation =
         MondrianExpectation
             .newBuilder()
@@ -118,22 +107,22 @@ public class NullValuesTest {
                 "SELECT ORDER([account custom member].[account custom member].[custom member].members, [account custom member].[account custom member].[custom member].[#null], DESC) on 0 FROM Account" )
             .result(
                 "Axis #0:\n"
-                    + "{}\n"
-                    + "Axis #1:\n"
-                    + "{[account custom member].[#null]}\n"
-                    + "{[account custom member].[LookUpCube(\"[Sales]]\",\"(Measures.[Store Sales]],\"+time.currentmember.UniqueName+\",\"+ Store.currentmember.UniqueName+\")\")]}\n"
-                    + "Row #0: 10\n" + "Row #0: 1\n" )
+                + "{}\n"
+                + "Axis #1:\n"
+                + "{[account custom member].[#null]}\n"
+                + "{[account custom member].[LookUpCube(\"[Sales]]\",\"(Measures.[Store Sales]],\"+time.currentmember.UniqueName+\",\"+ Store.currentmember.UniqueName+\")\")]}\n"
+                + "Row #0: 10\n" + "Row #0: 1\n" )
             .sql(
                 "select\n"
-                    + "    " + dialect.quoteIdentifier( "account.Custom_Members" ) + " " + dialect.quoteIdentifier( "c0" ) + "\n"
-                    + "from\n"
-                    + "    " + dialect.quoteIdentifier( "account" ) + " " + dialect.quoteIdentifier( "account" ) + "\n"
-                    + "where\n"
-                    + "    UPPER(" + dialect.quoteIdentifier( "account.Custom_Members" ) + ") = UPPER('account custom member')\n"
-                    + "group by\n"
-                    + "    " + dialect.quoteIdentifier( "account.Custom_Members" ) + "\n"
-                    + "order by\n"
-                    + "    " + orderExpr)
+                + "    account.Custom_Members as c0\n"
+                + "from\n"
+                + "    account as account\n"
+                + "where\n"
+                + "    UPPER(account.Custom_Members) = UPPER('account custom member')\n"
+                + "group by\n"
+                + "    account.Custom_Members\n"
+                + "order by\n"
+                + "    " + getOrderExpression( "c0", "account.Custom_Members", true, true, true ) )
             .build();
     MondrianContext.forCatalog( SCHEMA ).verify( expectation );
   }
@@ -213,21 +202,4 @@ public class NullValuesTest {
     SqlContext.defaultContext().verify( expectation );
   }
 
-  private String generateSelectQuery( String selectParam, String fromParam, String orderExpr ) {
-    StringBuilder query = new StringBuilder( "select " );
-    query.append( dialect.quoteIdentifier( selectParam ) );
-    query.append( " from " );
-    query.append( dialect.quoteIdentifier( fromParam ) );
-    query.append( " order by " );
-    query.append( orderExpr );
-    return query.toString();
-  }
-
-  private String getOrderExpression( String alias, String expr, boolean nullable, boolean ascending,
-      boolean collateNullsLast ) {
-    String orderExpr =
-        dialect.generateOrderItem( dialect.requiresOrderByAlias() ? dialect.quoteIdentifier( alias ) : dialect
-            .quoteIdentifier( expr ), nullable, ascending, collateNullsLast );
-    return orderExpr;
-  }
 }
