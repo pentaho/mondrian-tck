@@ -38,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -92,13 +93,20 @@ public class MondrianContext extends Context {
     RolapUtil.setHook( sqlCollector( sqls ) );
 
     OlapStatement statement = olapConnection.createStatement();
-    CellSet cellSet = statement.executeOlapQuery( expectation.getQuery() );
-    RolapUtil.setHook( existingHook );
+    if ( expectation.isExpectResultSet() ) {
+      // some MDX queries (e.g. drillthrough) return ResultSet object
+      ResultSet rs = statement.executeQuery(expectation.getQuery());
+      RolapUtil.setHook( existingHook );
+      expectation.verify( rs, sqls, olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+    } else {
+      CellSet cellSet = statement.executeOlapQuery( expectation.getQuery() );
+      RolapUtil.setHook( existingHook );
+      expectation.verify(
+                cellSet,
+                sqls,
+                olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+    }
 
-    expectation.verify(
-      cellSet,
-      sqls,
-      olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
   }
 
   private RolapUtil.ExecuteQueryHook sqlCollector( final List<String> sqls ) {
