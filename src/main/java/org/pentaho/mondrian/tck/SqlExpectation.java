@@ -93,7 +93,8 @@ public class SqlExpectation {
   }
 
   private void validateRows( ResultSet rs ) throws Exception {
-    final int nbCols = rs.getMetaData().getColumnCount();
+    final int nbCols = columnsPartial ? columns.length : rs.getMetaData().getColumnCount();
+    final List<String> columnsList = columnsPartial ? Arrays.asList( columns ) : new ArrayList<String>();
 
     int rowNum = -1;
     while ( rs.next() ) {
@@ -107,6 +108,10 @@ public class SqlExpectation {
 
       // Build a string representation of the row
       for ( int j = 1; j <= nbCols; j++ ) {
+        if ( columnsPartial && !columnsList.contains( rs.getMetaData().getColumnName( j ).toLowerCase() ) ) {
+          continue;
+        }
+
         if ( j > 1 ) {
           // Add a delimiter
           curRow.append( "|" );
@@ -158,8 +163,12 @@ public class SqlExpectation {
     if ( types == null ) {
       return;
     }
-    int columnCount = rs.getMetaData().getColumnCount();
+    int columnCount = columnsPartial ? columns.length : rs.getMetaData().getColumnCount();
+    final List<String> columnsList = columnsPartial ? Arrays.asList( columns ) : new ArrayList<String>();
     for ( int i = 1; i <= columnCount; i++ ) {
+      if ( columnsPartial && !columnsList.contains( rs.getMetaData().getColumnName( i ).toLowerCase() ) ) {
+        continue;
+      }
       assertEquals(
         "Wrong meta type for column " + rs.getMetaData().getColumnName( i )
         + ", expected meta type "
@@ -204,10 +213,6 @@ public class SqlExpectation {
 
       case java.sql.Types.TINYINT:
         checkType( colName, "Byte", actual.getClass(), Byte.class );
-        break;
-
-      case java.sql.Types.OTHER:
-        // don't verify
         break;
 
       default:
@@ -330,6 +335,17 @@ public class SqlExpectation {
   }
 
   public interface ResultSetProvider {
+    /**
+     * Returns {@link java.sql.ResultSet} executed by the {@link java.sql.Statement}<br/>
+     * <p>
+     *   Code should be like <br/>
+     *   {@code statement.<doSomething>; return statement.getResultSet();}
+     * </p>
+     *
+     * @param statement statement to execute
+     * @return resultSet
+     * @throws Exception exception during the execution
+     */
     ResultSet getData( Statement statement ) throws Exception;
   }
 }
