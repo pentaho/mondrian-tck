@@ -24,6 +24,7 @@ package org.pentaho.mondrian.tck;
 import mondrian.olap.MondrianProperties;
 import org.junit.Test;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -36,9 +37,9 @@ public class AggregationTablesRecognitionTest {
         SqlExpectation.newBuilder()
             .query(
                 new SqlExpectation.ResultSetProvider() {
-                  public ResultSet getData( Statement statement ) throws Exception {
-                    return statement.getConnection().getMetaData()
-                        .getTables( statement.getConnection().getCatalog(), "", "%", new String[]{"TABLE"} );
+                  public ResultSet getData( Connection conn, Statement statement ) throws Exception {
+                    return conn.getMetaData()
+                        .getTables( conn.getCatalog(), "", "%", new String[]{"TABLE", "VIEW"} );
                   }
                 } )
 
@@ -120,9 +121,9 @@ public class AggregationTablesRecognitionTest {
             MondrianExpectation expectation = newBuilder()
                 .query( "SELECT [Measures].[customer_count] on 0 from [Sales]" )
                 .sql( "select\n"
-                    + "    sum(`agg_c_10_sales_fact_1997`.`customer_count`) as `m0`\n"
+                    + "    sum(agg_c_10_sales_fact_1997.customer_count) as m0\n"
                     + "from\n"
-                    + "    `agg_c_10_sales_fact_1997` as `agg_c_10_sales_fact_1997`" )
+                    + "    agg_c_10_sales_fact_1997 as agg_c_10_sales_fact_1997" )
                 .build();
 
             try {
