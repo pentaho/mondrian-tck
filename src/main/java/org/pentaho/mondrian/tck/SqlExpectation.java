@@ -24,6 +24,7 @@ package org.pentaho.mondrian.tck;
 import com.google.common.base.Function;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
@@ -259,7 +260,7 @@ public class SqlExpectation {
     public Builder query( final String query ) {
       return query( new ResultSetProvider() {
         @Override
-        public ResultSet getData( Statement statement ) throws Exception {
+        public ResultSet getData( Connection conn, Statement statement ) throws Exception {
           for ( Function<Statement, Void> statementModifier : statementModifiers ) {
             statementModifier.apply( statement );
           }
@@ -267,7 +268,10 @@ public class SqlExpectation {
           try {
             statement.execute( query );
           } catch ( Throwable t ) {
-            throw new Exception( "Query failed to run successfully.", t );
+            throw new Exception(
+              "Query failed to run successfully:\n"
+              + query,
+              t );
           }
 
           return statement.getResultSet();
@@ -334,6 +338,16 @@ public class SqlExpectation {
     }
   }
 
+  /**
+   * This interface has to be implemented to provide a ResultSet to validate to
+   * the Expectation classes.
+   *
+   * <p>There are two arguments to the API, one for the connection and one for the
+   * statement. Note that this is required because the statements provided by the shims
+   * are not symmetrical. The bug can be represented as:
+   *
+   * <p><code>connection != connection.createStatement().getConnection()</code>
+   */
   public interface ResultSetProvider {
     /**
      * Returns {@link java.sql.ResultSet} executed by the {@link java.sql.Statement}<br/>
@@ -341,11 +355,7 @@ public class SqlExpectation {
      *   Code should be like <br/>
      *   {@code statement.<doSomething>; return statement.getResultSet();}
      * </p>
-     *
-     * @param statement statement to execute
-     * @return resultSet
-     * @throws Exception exception during the execution
      */
-    ResultSet getData( Statement statement ) throws Exception;
+    ResultSet getData( Connection conn, Statement statement ) throws Exception;
   }
 }

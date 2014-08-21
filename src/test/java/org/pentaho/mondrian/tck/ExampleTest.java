@@ -21,11 +21,11 @@
  */
 package org.pentaho.mondrian.tck;
 
+import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 import mondrian.olap.MondrianProperties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.pentaho.mondrian.tck.MondrianExpectation.newBuilder;
 
 public class ExampleTest {
   private static final Logger logger = LoggerFactory.getLogger( ExampleTest.class );

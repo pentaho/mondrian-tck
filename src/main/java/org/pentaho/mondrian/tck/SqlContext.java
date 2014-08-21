@@ -70,7 +70,7 @@ public class SqlContext extends Context {
 
   public void verify( SqlExpectation expectation ) throws Exception {
     try ( final Statement statement = connection.createStatement() ) {
-      final ResultSet rs = expectation.query.getData( statement );
+      final ResultSet rs = expectation.query.getData( connection, statement );
 
       expectation.verify( rs );
     }

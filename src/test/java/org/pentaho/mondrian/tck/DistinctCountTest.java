@@ -21,6 +21,7 @@
  */
 package org.pentaho.mondrian.tck;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Types;
@@ -73,8 +74,8 @@ public class DistinctCountTest {
     SqlExpectation expectation = SqlExpectation.newBuilder()
         .query( new SqlExpectation.ResultSetProvider() {
           @Override
-          public ResultSet getData( Statement statement ) throws Exception {
-            return statement.getConnection().getMetaData().getIndexInfo( statement.getConnection().getCatalog(), null, "product", false, false );
+          public ResultSet getData( Connection conn, Statement statement ) throws Exception {
+            return conn.getMetaData().getIndexInfo( conn.getCatalog(), null, "product", false, false );
           }
         } )
 
