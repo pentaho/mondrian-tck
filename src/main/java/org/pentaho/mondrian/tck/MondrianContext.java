@@ -21,16 +21,6 @@
  */
 package org.pentaho.mondrian.tck;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import mondrian.olap.MondrianProperties;
-import mondrian.rolap.RolapConnection;
-import mondrian.rolap.RolapUtil;
-import org.olap4j.CellSet;
-import org.olap4j.OlapConnection;
-import org.olap4j.OlapStatement;
-
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -40,7 +30,24 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+
+import mondrian.olap.MondrianProperties;
+import mondrian.olap.Util;
+import mondrian.rolap.RolapConnection;
+import mondrian.rolap.RolapUtil;
+
+import org.olap4j.CellSet;
+import org.olap4j.OlapConnection;
+import org.olap4j.OlapStatement;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 public class MondrianContext extends Context {
 
@@ -67,7 +74,7 @@ public class MondrianContext extends Context {
       }
     } );
 
-  private OlapConnection olapConnection;
+  OlapConnection olapConnection;
 
   private MondrianContext( final OlapConnection olapConnection ) {
     this.olapConnection = olapConnection;
@@ -82,23 +89,72 @@ public class MondrianContext extends Context {
       replaceCatalog( MondrianProperties.instance().TestConnectString.get(), catalogs.get( catalog ) ) );
   }
 
+  public static MondrianContext forCatalog( String catalog, boolean withPooling ) throws IOException, ExecutionException {
+    return forConnection(
+      replacePooling(
+        replaceCatalog(
+          MondrianProperties.instance().TestConnectString.get(),
+          catalogs.get( catalog ) ),
+        withPooling ) );
+  }
+
   public static MondrianContext defaultContext() throws IOException, ExecutionException {
     return forConnection( MondrianProperties.instance().TestConnectString.get() );
   }
 
-  public void verify( MondrianExpectation expectation ) throws Exception {
+  public void verify( final MondrianExpectation expectation ) throws Exception {
     final List<String> sqls = new ArrayList<>();
     RolapUtil.ExecuteQueryHook existingHook = RolapUtil.getHook();
     RolapUtil.setHook( sqlCollector( sqls ) );
 
-    OlapStatement statement = olapConnection.createStatement();
-    CellSet cellSet = statement.executeOlapQuery( expectation.getQuery() );
+    final OlapStatement statement = olapConnection.createStatement();
+
+    final CellSet cellSet;
+    if ( expectation.canBeRandomlyCanceled && Math.random() > 0.5 ) {
+      // We have to cancel this query.
+
+      // Create an executor.
+      final ExecutorService executor = Util.getExecutorService(
+          1, 1, 0, "query-background-canceler", new RejectedExecutionHandler() {
+            @Override
+            public void rejectedExecution( Runnable r, ThreadPoolExecutor executor ) {
+              throw new RuntimeException( "TCK programming error" );
+            }
+          } );
+
+      // Place the query on the executor thread.
+      executor.submit( new Callable<CellSet>() {
+        @Override
+        public CellSet call() throws Exception {
+          return statement.executeOlapQuery( expectation.getQuery() );
+        }
+      } );
+
+      // Wait a bit.
+      Thread.sleep( 1000 );
+
+      // Now cancel the query.
+      try {
+        statement.cancel();
+        statement.close();
+      } catch ( Throwable t ) {
+        t.printStackTrace();
+      }
+
+      cellSet = null;
+    } else {
+      // No random cancel. Just execute right on this thread.
+      cellSet = statement.executeOlapQuery( expectation.getQuery() );
+    }
+
     RolapUtil.setHook( existingHook );
 
-    expectation.verify(
-      cellSet,
-      sqls,
-      olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+    if ( cellSet != null ) {
+      expectation.verify(
+        cellSet,
+        sqls,
+        olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+    }
   }
 
   private RolapUtil.ExecuteQueryHook sqlCollector( final List<String> sqls ) {
@@ -113,5 +169,15 @@ public class MondrianContext extends Context {
   private static String replaceCatalog( final String connectString, final Path catalogFile ) {
     return connectString.replaceFirst( "Catalog=[^;]+;", "Catalog=" + catalogFile.toString()
         .replaceAll( "\\\\", "/" ) + ";" );
+  }
+
+  private static String replacePooling( final String connectString, final boolean withPooling ) {
+    if ( connectString.contains( "PoolNeeded" ) ) {
+      return connectString.replaceFirst(
+        "PoolNeeded=[^;]+;",
+        "PoolNeeded=" + String.valueOf( withPooling ) + ";" );
+    } else {
+      return connectString.concat( ";PoolNeeded=" + String.valueOf( withPooling ) );
+    }
   }
 }

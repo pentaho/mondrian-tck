@@ -35,6 +35,25 @@ public class FoodMartCatalogs {
       + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
       + "  </Cube>"
       + "</Schema>";
+  public static final String FLAT_WITH_FEW_DIMS =
+    "<Schema name=\"FoodMart\">"
+      + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
+      + "    <Table name=\"sales_fact_1997\"/>"
+      + "  <Dimension name=\"customer\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
+      + "      <Table name=\"sales_fact_1997\"/>\n"
+      + "      <Level name=\"customer id\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "  <Dimension name=\"store\">\n"
+      + "    <Hierarchy hasAll=\"true\" primaryKey=\"store_id\">\n"
+      + "      <Table name=\"sales_fact_1997\"/>\n"
+      + "      <Level name=\"store id\" type=\"Integer\" column=\"store_id\" uniqueMembers=\"true\"/>\n"
+      + "    </Hierarchy>\n"
+      + "  </Dimension>"
+      + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
+      + "  </Cube>"
+      + "</Schema>";
   public static final String STAR_WITH_STORE =
     "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"

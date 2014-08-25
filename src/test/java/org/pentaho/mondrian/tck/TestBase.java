@@ -34,6 +34,16 @@ public abstract class TestBase {
     dialect = SqlContext.defaultContext().getDialect();
   }
 
+  static class QueryAndResult {
+    final String query;
+    final String result;
+
+    QueryAndResult( String query, String result ) {
+      this.query = query;
+      this.result = result;
+    }
+  }
+
   String generateSelectQuery(
       String selectParam,
       String fromParam,
