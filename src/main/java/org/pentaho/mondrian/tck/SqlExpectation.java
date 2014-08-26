@@ -21,7 +21,10 @@
  */
 package org.pentaho.mondrian.tck;
 
-import com.google.common.base.Function;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -34,10 +37,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import mondrian.rolap.RolapUtil;
+
+import org.apache.log4j.Logger;
+
+import com.google.common.base.Function;
 
 public class SqlExpectation {
 
+  static final Logger LOGGER = RolapUtil.SQL_LOGGER;
   final ResultSetProvider query;
   final String[] columns;
   final boolean columnsPartial;
@@ -45,15 +53,25 @@ public class SqlExpectation {
   final boolean partial;
   final int[] types;
   List<Function<Statement, Void>> statementModifiers;
+  final int cancelTimeout;
 
-  public SqlExpectation( ResultSetProvider query, String[] columns, boolean columnsPartial, int[] types, String[] rows,
-                         boolean partial, final List<Function<Statement, Void>> statementModifiers ) {
+  public SqlExpectation(
+      ResultSetProvider query,
+      String[] columns,
+      boolean columnsPartial,
+      int[] types,
+      String[] rows,
+      boolean partial,
+      int cancelTimeout,
+      final List<Function<Statement, Void>> statementModifiers ) {
+
     this.query = query;
     this.columns = columns;
     this.columnsPartial = columnsPartial;
     this.types = types;
     this.rows = rows;
     this.partial = partial;
+    this.cancelTimeout = cancelTimeout;
     this.statementModifiers = statementModifiers;
   }
 
@@ -238,6 +256,7 @@ public class SqlExpectation {
     private boolean columnsPartial;
     private String[] rows;
     private int[] types;
+    private int cancelTimeout = -1;
     private boolean partial = false;
     private List<Function<Statement, Void>> statementModifiers = new ArrayList<>();
 
@@ -260,12 +279,14 @@ public class SqlExpectation {
     public Builder query( final String query ) {
       return query( new ResultSetProvider() {
         @Override
-        public ResultSet getData( Connection conn, Statement statement ) throws Exception {
+        public ResultSet getData( Connection conn, final Statement statement ) throws Exception {
           for ( Function<Statement, Void> statementModifier : statementModifiers ) {
             statementModifier.apply( statement );
           }
 
           try {
+            // Run the query
+            SqlExpectation.LOGGER.info( "Mondrian.tck:" + query );
             statement.execute( query );
           } catch ( Throwable t ) {
             throw new Exception(
@@ -333,8 +354,13 @@ public class SqlExpectation {
       return this;
     }
 
+    public Builder cancelTimeout( int to ) {
+      this.cancelTimeout = to;
+      return this;
+    }
+
     public SqlExpectation build() {
-      return new SqlExpectation( query, columns, columnsPartial, types, rows, partial, statementModifiers );
+      return new SqlExpectation( query, columns, columnsPartial, types, rows, partial, cancelTimeout, statementModifiers );
     }
   }
 

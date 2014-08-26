@@ -103,6 +103,14 @@ public class MondrianContext extends Context {
   }
 
   public void verify( final MondrianExpectation expectation ) throws Exception {
+
+    if ( expectation.withFreshCache ) {
+      // Make sure to clear the schema cache first.
+      olapConnection.unwrap( RolapConnection.class )
+        .getCacheControl( null )
+        .flushSchemaCache();
+    }
+
     final List<String> sqls = new ArrayList<>();
     RolapUtil.ExecuteQueryHook existingHook = RolapUtil.getHook();
     RolapUtil.setHook( sqlCollector( sqls ) );

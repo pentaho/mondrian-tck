@@ -106,6 +106,9 @@ public class DistinctCountTest {
             + "    count(distinct sales_fact_1997.unit_sales) as m0\n"
             + "from\n"
             + "    sales_fact_1997 sales_fact_1997" )
+        // This test needs a fresh cache, or it pulls the column metadata
+        // from other tests.
+        .withFreshCache()
         .build();
     MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER.replace( "aggregator=\"sum\""
         , "aggregator=\"distinct-count\"" ) ).verify( expectation );
