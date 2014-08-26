@@ -42,16 +42,19 @@ public class MondrianExpectation {
   private final List<String> expectedSqls;
   private final Optional<String> result;
   final boolean canBeRandomlyCanceled;
+  final boolean withFreshCache;
 
   private MondrianExpectation(
     final String query,
     final String result,
     final List<String> expectedSqls,
-    final boolean canBeRandomlyCanceled ) {
+    final boolean canBeRandomlyCanceled,
+    final boolean withFreshCache ) {
 
     this.query = query;
     this.expectedSqls = expectedSqls;
     this.canBeRandomlyCanceled = canBeRandomlyCanceled;
+    this.withFreshCache = withFreshCache;
     this.result = Optional.fromNullable( result );
   }
 
@@ -126,6 +129,7 @@ public class MondrianExpectation {
     private List<String> sqls = new ArrayList<>();
     private String query;
     private boolean canBeRandomlyCanceled = false;
+    private boolean withFreshCache = false;
 
     private Builder() {
     }
@@ -150,8 +154,14 @@ public class MondrianExpectation {
       return this;
     }
 
+    public Builder withFreshCache() {
+      this.withFreshCache = true;
+      return this;
+    }
+
     public MondrianExpectation build() {
-      return new MondrianExpectation( query, result, sqls, canBeRandomlyCanceled );
+      return new MondrianExpectation(
+        query, result, sqls, canBeRandomlyCanceled, withFreshCache );
     }
 
   }

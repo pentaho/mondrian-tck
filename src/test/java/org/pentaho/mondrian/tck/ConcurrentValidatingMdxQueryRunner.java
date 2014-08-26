@@ -124,7 +124,7 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
 
     LOGGER.info( message );
 
-    for ( Object throwable : mExceptions ) {
+    for ( Throwable throwable : mExceptions ) {
       LOGGER.error( throwable );
     }
   }
@@ -147,16 +147,15 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
       boolean usePooling,
       QueryAndResult[] queriesAndResults ) throws Exception {
 
-    // Make sure to clear the schema cache first.
-    MondrianContext
-      .forCatalog( FoodMartCatalogs.FLAT_WITH_FEW_DIMS, usePooling )
-        .olapConnection.unwrap( RolapConnection.class )
-          .getCacheControl( null )
-            .flushSchemaCache();
-
     ConcurrentValidatingMdxQueryRunner[] runners =
       new ConcurrentValidatingMdxQueryRunner[numThreads];
     List<Throwable> allExceptions = new ArrayList<Throwable>();
+
+    MondrianContext ctx =
+      MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_FEW_DIMS, usePooling );
+    ctx.olapConnection.unwrap( RolapConnection.class )
+      .getCacheControl( null )
+        .flushSchemaCache();
 
     for ( int idx = 0; idx < runners.length; idx++ ) {
       runners[idx] = new ConcurrentValidatingMdxQueryRunner(
