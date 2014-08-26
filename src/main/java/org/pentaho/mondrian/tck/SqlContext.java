@@ -128,11 +128,10 @@ public class SqlContext extends Context {
         if ( System.currentTimeMillis() - startTime < expectation.cancelTimeout ) {
           Assert.fail( "Query canceled after it finished." );
         }
+        Assert.fail( "Query should have been canceled." );
       }
 
       expectation.verify( rs );
-
-      Assert.fail( "Query should have been canceled." );
 
     } finally {
       dispose();
