@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -86,16 +87,16 @@ public class MondrianContext extends Context {
 
   public static MondrianContext forCatalog( String catalog ) throws IOException, ExecutionException {
     return forConnection(
-      replaceCatalog( MondrianProperties.instance().TestConnectString.get(), catalogs.get( catalog ) ) );
+        replaceCatalog( MondrianProperties.instance().TestConnectString.get(), catalogs.get( catalog ) ) );
   }
 
   public static MondrianContext forCatalog( String catalog, boolean withPooling ) throws IOException, ExecutionException {
     return forConnection(
-      replacePooling(
-        replaceCatalog(
-          MondrianProperties.instance().TestConnectString.get(),
-          catalogs.get( catalog ) ),
-        withPooling ) );
+        replacePooling(
+            replaceCatalog(
+                MondrianProperties.instance().TestConnectString.get(),
+                catalogs.get( catalog ) ),
+            withPooling ) );
   }
 
   public static MondrianContext defaultContext() throws IOException, ExecutionException {
@@ -116,52 +117,58 @@ public class MondrianContext extends Context {
     RolapUtil.setHook( sqlCollector( sqls ) );
 
     final OlapStatement statement = olapConnection.createStatement();
+    if ( expectation.isExpectResultSet() ) {
+      // some MDX queries (e.g. drillthrough) return ResultSet object
+      ResultSet rs = statement.executeQuery(expectation.getQuery());
+      RolapUtil.setHook( existingHook );
+      expectation.verify( rs, sqls, olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+    } else {
+      final CellSet cellSet;
+      if ( expectation.canBeRandomlyCanceled && Math.random() > 0.5 ) {
+        // We have to cancel this query.
 
-    final CellSet cellSet;
-    if ( expectation.canBeRandomlyCanceled && Math.random() > 0.5 ) {
-      // We have to cancel this query.
+        // Create an executor.
+        final ExecutorService executor = Util.getExecutorService(
+            1, 1, 0, "query-background-canceler", new RejectedExecutionHandler() {
+              @Override
+              public void rejectedExecution( Runnable r, ThreadPoolExecutor executor ) {
+                throw new RuntimeException( "TCK programming error" );
+              }
+            } );
 
-      // Create an executor.
-      final ExecutorService executor = Util.getExecutorService(
-          1, 1, 0, "query-background-canceler", new RejectedExecutionHandler() {
-            @Override
-            public void rejectedExecution( Runnable r, ThreadPoolExecutor executor ) {
-              throw new RuntimeException( "TCK programming error" );
-            }
-          } );
+        // Place the query on the executor thread.
+        executor.submit( new Callable<CellSet>() {
+          @Override
+          public CellSet call() throws Exception {
+            return statement.executeOlapQuery( expectation.getQuery() );
+          }
+        } );
 
-      // Place the query on the executor thread.
-      executor.submit( new Callable<CellSet>() {
-        @Override
-        public CellSet call() throws Exception {
-          return statement.executeOlapQuery( expectation.getQuery() );
+        // Wait a bit.
+        Thread.sleep( 1000 );
+
+        // Now cancel the query.
+        try {
+          statement.cancel();
+          statement.close();
+        } catch ( Throwable t ) {
+          t.printStackTrace();
         }
-      } );
 
-      // Wait a bit.
-      Thread.sleep( 1000 );
-
-      // Now cancel the query.
-      try {
-        statement.cancel();
-        statement.close();
-      } catch ( Throwable t ) {
-        t.printStackTrace();
+        cellSet = null;
+      } else {
+        // No random cancel. Just execute right on this thread.
+        cellSet = statement.executeOlapQuery( expectation.getQuery() );
       }
 
-      cellSet = null;
-    } else {
-      // No random cancel. Just execute right on this thread.
-      cellSet = statement.executeOlapQuery( expectation.getQuery() );
-    }
+      RolapUtil.setHook( existingHook );
 
-    RolapUtil.setHook( existingHook );
-
-    if ( cellSet != null ) {
-      expectation.verify(
-        cellSet,
-        sqls,
-        olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+      if ( cellSet != null ) {
+        expectation.verify(
+            cellSet,
+            sqls,
+            olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
+      }
     }
   }
 
