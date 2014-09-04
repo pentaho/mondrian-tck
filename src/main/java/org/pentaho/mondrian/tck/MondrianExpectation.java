@@ -31,6 +31,7 @@ import org.olap4j.layout.TraditionalCellSetFormatter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,32 +42,56 @@ public class MondrianExpectation {
   private final String query;
   private final List<String> expectedSqls;
   private final Optional<String> result;
+  private final boolean expectResultSet;
+  private ResultSetValidator rsValidator;
   final boolean canBeRandomlyCanceled;
   final boolean withFreshCache;
 
-  private MondrianExpectation(
-    final String query,
-    final String result,
-    final List<String> expectedSqls,
-    final boolean canBeRandomlyCanceled,
-    final boolean withFreshCache ) {
-
+  public MondrianExpectation(
+      final String query,
+      final List<String> expectedSqls,
+      final String result,
+      final boolean expectResultSet,
+      final String[] columns,
+      final boolean columnsPartial,
+      final String[] rows,
+      final boolean partial,
+      final int[] types,
+      final boolean canBeRandomlyCanceled,
+      final boolean withFreshCache ) {
     this.query = query;
     this.expectedSqls = expectedSqls;
     this.canBeRandomlyCanceled = canBeRandomlyCanceled;
     this.withFreshCache = withFreshCache;
     this.result = Optional.fromNullable( result );
+    this.expectResultSet = expectResultSet;
+    if ( this.expectResultSet ) {
+      rsValidator = new ResultSetValidator( columns, columnsPartial, rows, partial, types );
+    }
   }
 
   public String getQuery() {
     return query;
   }
 
+  public boolean isExpectResultSet() {
+    return expectResultSet;
+  }
+
+  public void verify( ResultSet rs, List<String> sqls, Dialect dialect ) throws Exception {
+    rsValidator.validateRows( rs );
+    rsValidator.validateColumns( rs );
+    verifySqls( sqls, dialect );
+  }
+
   public void verify( CellSet cellSet, List<String> sqls, Dialect dialect ) {
     if ( result.isPresent() ) {
       assertEquals( result.get(), cellSetToString( cellSet ) );
     }
+    verifySqls( sqls, dialect );
+  }
 
+  protected void verifySqls( List<String> sqls, Dialect dialect ) {
     List<String> cleanSqls = new ArrayList<>();
     for ( String sql : sqls ) {
       sql = cleanLineEndings( sql );
@@ -128,6 +153,12 @@ public class MondrianExpectation {
     private String result;
     private List<String> sqls = new ArrayList<>();
     private String query;
+    private String[] columns;
+    private boolean columnsPartial;
+    private String[] rows;
+    private int[] types;
+    private boolean partial = false;
+    private boolean expectResultSet = false;
     private boolean canBeRandomlyCanceled = false;
     private boolean withFreshCache = false;
 
@@ -149,6 +180,57 @@ public class MondrianExpectation {
       return this;
     }
 
+    public Builder expectResultSet( ) {
+      this.expectResultSet = true;
+      return this;
+    }
+
+    /**
+     * Sets the column names expected
+     * <p>(optional)
+     */
+    public Builder columns( String... columns ) {
+      this.columns = columns;
+      return this;
+    }
+
+    /**
+     * Sets whether the columns provided in {@link #columns(String[])} are only the
+     * part of the columns of the result set.
+     * <p>(optional)
+     */
+    public Builder columnsPartial() {
+      this.columnsPartial = true;
+      return this;
+    }
+
+    /**
+     * Sets the expected column types. Use values in {@link java.sql.Types}.
+     * <p>(optional)
+     */
+    public Builder types( int... types ) {
+      this.types = types;
+      return this;
+    }
+
+    /**
+     * Sets the expected rows. The value delimiter is pipe ( '|' ).
+     * <p>(optional)
+     */
+    public Builder rows( String... rows ) {
+      this.rows = rows;
+      return this;
+    }
+
+    /**
+     * Sets whether the rows provided in {@link #rows(String[])} are only the
+     * first rows of the result set and we didn't intend to validate them all.
+     */
+    public Builder partial() {
+      this.partial  = true;
+      return this;
+    }
+
     public Builder canBeRandomlyCanceled() {
       this.canBeRandomlyCanceled = true;
       return this;
@@ -160,8 +242,7 @@ public class MondrianExpectation {
     }
 
     public MondrianExpectation build() {
-      return new MondrianExpectation(
-        query, result, sqls, canBeRandomlyCanceled, withFreshCache );
+      return new MondrianExpectation( query, sqls, result, expectResultSet, columns, columnsPartial, rows, partial, types, canBeRandomlyCanceled, withFreshCache );
     }
 
   }
