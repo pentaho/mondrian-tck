@@ -66,7 +66,7 @@ public class MondrianExpectation {
     this.result = Optional.fromNullable( result );
     this.expectResultSet = expectResultSet;
     if ( this.expectResultSet ) {
-        rsValidator = new ResultSetValidator( columns, columnsPartial, rows, partial, types );
+      rsValidator = new ResultSetValidator( columns, columnsPartial, rows, partial, types );
     }
   }
 
@@ -180,8 +180,8 @@ public class MondrianExpectation {
       return this;
     }
 
-    public Builder expectResultSet( boolean expectResultSet ) {
-      this.expectResultSet = expectResultSet;
+    public Builder expectResultSet( ) {
+      this.expectResultSet = true;
       return this;
     }
 

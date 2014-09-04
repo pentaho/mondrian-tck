@@ -21,20 +21,10 @@
  */
 package org.pentaho.mondrian.tck;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.sql.Types;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import mondrian.rolap.RolapUtil;
@@ -74,7 +64,7 @@ public class SqlExpectation {
     this.partial = partial;
     this.cancelTimeout = cancelTimeout;
     this.statementModifiers = statementModifiers;
-    this.validator = new ResultSetValidator(columns, columnsPartial, rows, partial, types);
+    this.validator = new ResultSetValidator( columns, columnsPartial, rows, partial, types );
   }
 
   public void verify( ResultSet rs ) throws Exception {

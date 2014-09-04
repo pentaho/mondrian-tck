@@ -23,104 +23,145 @@ package org.pentaho.mondrian.tck;
 
 import org.junit.Test;
 
-public class DrillthroughTest {
+public class DrillthroughTest extends TestBase {
 
-    @Test
-    public void testReturnOnStarSchema() throws Exception {
-        String query = "DRILLTHROUGH\n"
-                + "maxrows 3\n"
-                + "SELECT {[Customers].[USA].[CA].[Berkeley]} ON 0,\n"
-                + "{[Time].[1997]} ON 1\n"
-                + "FROM Sales\n"
-                + "RETURN [Measures].[Unit Sales]";
+  @Test
+  public void testDrillOnSnowflakeSchema() throws Exception {
+    String query =
+      "DRILLTHROUGH\n"
+      + "SELECT {[Product].[Product Subcategory].[Beer]} ON 0\n"
+      + "FROM Sales\n";
 
-        MondrianExpectation expectation = MondrianExpectation.newBuilder()
-                .query( query )
-                .expectResultSet(true)
-                .rows("1.0", "1.0", "2.0")
-                .sql("select\n" +
-                        "    time_by_day.the_year as c0,\n" +
-                        "    customer.state_province as c1,\n" +
-                        "    customer.city as c2,\n" +
-                        "    sum(sales_fact_1997.unit_sales) as m0\n" +
-                        "from\n" +
-                        "    time_by_day time_by_day,\n" +
-                        "    sales_fact_1997 sales_fact_1997,\n" +
-                        "    customer customer\n" +
-                        "where\n" +
-                        "    sales_fact_1997.time_id = time_by_day.time_id\n" +
-                        "and\n" +
-                        "    time_by_day.the_year = 1997\n" +
-                        "and\n" +
-                        "    sales_fact_1997.customer_id = customer.customer_id\n" +
-                        "and\n" +
-                        "    customer.state_province = 'CA'\n" +
-                        "and\n" +
-                        "    customer.city = 'Berkeley'\n" +
-                        "group by\n" +
-                        "    time_by_day.the_year,\n" +
-                        "    customer.state_province,\n" +
-                        "    customer.city")
-                .build();
-        MondrianContext.defaultContext().verify(expectation);
-    }
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query( query )
+      .expectResultSet()
+      .rows(
+        "Drink|Alcoholic Beverages|Beer and Wine|Beer|Good|Good Imported Beer|1",
+        "Drink|Alcoholic Beverages|Beer and Wine|Beer|Good|Good Imported Beer|3" )
+      .partial()
+      .sql(
+        "select\n"
+        + "    product_class.product_family as Product Family,\n"
+        + "    product_class.product_department as Product Department,\n"
+        + "    product_class.product_category as Product Category,\n"
+        + "    product_class.product_subcategory as Product Subcategory,\n"
+        + "    product.brand_name as Brand Name,\n"
+        + "    product.product_name as Product Name,\n"
+        + "    sales_fact_1997.unit_sales as Unit Sales\n"
+        + "from\n"
+        + "    product_class as product_class,\n"
+        + "    product as product,\n"
+        + "    sales_fact_1997 as sales_fact_1997\n"
+        + "where\n"
+        + "    sales_fact_1997.product_id = product.product_id\n"
+        + "and\n"
+        + "    product.product_class_id = product_class.product_class_id\n"
+        + "and\n"
+        + "    product_class.product_family = 'Drink'\n"
+        + "and\n"
+        + "    product_class.product_department = 'Alcoholic Beverages'\n"
+        + "and\n"
+        + "    product_class.product_category = 'Beer and Wine'\n"
+        + "and\n"
+        + "    product_class.product_subcategory = 'Beer'\n" )
+      .build();
+    MondrianContext.forCatalog( FoodMartCatalogs.SNOWFLAKE_WITH_PRODUCT ).verify( expectation );
+  }
 
-    @Test
-    public void testFactTable() throws Exception {
-        String catalog =
-                "<Schema name=\"FoodMart\">\n" +
-                "  <Cube name=\"Store\">\n" +
-                "    <Table name=\"store\"/>\n" +
-                "    <Dimension name=\"Store_Type\">\n" +
-                "      <Hierarchy hasAll=\"true\">\n" +
-                "        <Level name=\"Store_Type\" column=\"store_type\" uniqueMembers=\"true\"/>\n" +
-                "      </Hierarchy>\n" +
-                "    </Dimension>\n" +
-                "    <Dimension name=\"Has_coffee_bar\">\n" +
-                "      <Hierarchy hasAll=\"true\">\n" +
-                "        <Level name=\"Has_coffee_bar\" column=\"coffee_bar\" uniqueMembers=\"true\"\n" +
-                "            type=\"Boolean\"/>\n" +
-                "      </Hierarchy>\n" +
-                "    </Dimension>\n" +
-                "    <Measure name=\"Store_Sqft\" column=\"store_sqft\" aggregator=\"sum\"\n" +
-                "        formatString=\"#,###\"/>\n" +
-                "    <Measure name=\"Grocery_Sqft\" column=\"grocery_sqft\" aggregator=\"sum\"\n" +
-                "        formatString=\"#,###\"/>\n" +
-                "  </Cube>\n" +
-                "</Schema>";
+  @Test
+  public void testDrillOnSnowflakeSchemaNoSpaces() throws Exception {
+    String query =
+      "DRILLTHROUGH\n"
+      + "SELECT {[Product].[ProductSubcategory].[Beer]} ON 0\n"
+      + "FROM Sales\n";
 
-        String query = "DRILLTHROUGH\n"
-                + "maxrows 2\n"
-                + "SELECT {[Store_Type].[Supermarket]} ON 0,\n"
-                + "{[Has_coffee_bar]} ON 1\n"
-                + "FROM Store\n";
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query( query )
+      .expectResultSet()
+      .rows(
+        "Drink|Alcoholic Beverages|Beer and Wine|Beer|Good|Good Imported Beer|1",
+        "Drink|Alcoholic Beverages|Beer and Wine|Beer|Good|Good Imported Beer|3" )
+      .partial()
+      .sql(
+        "select\n"
+        + "    product_class.product_family as ProductFamily,\n"
+        + "    product_class.product_department as ProductDepartment,\n"
+        + "    product_class.product_category as ProductCategory,\n"
+        + "    product_class.product_subcategory as ProductSubcategory,\n"
+        + "    product.brand_name as BrandName,\n"
+        + "    product.product_name as ProductName,\n"
+        + "    sales_fact_1997.unit_sales as UnitSales\n"
+        + "from\n"
+        + "    product_class as product_class,\n"
+        + "    product as product,\n"
+        + "    sales_fact_1997 as sales_fact_1997\n"
+        + "where\n"
+        + "    sales_fact_1997.product_id = product.product_id\n"
+        + "and\n"
+        + "    product.product_class_id = product_class.product_class_id\n"
+        + "and\n"
+        + "    product_class.product_family = 'Drink'\n"
+        + "and\n"
+        + "    product_class.product_department = 'Alcoholic Beverages'\n"
+        + "and\n"
+        + "    product_class.product_category = 'Beer and Wine'\n"
+        + "and\n"
+        + "    product_class.product_subcategory = 'Beer'\n" )
+      .build();
+    MondrianContext.forCatalog( FoodMartCatalogs.SNOWFLAKE_WITH_PRODUCT_NO_SPACES ).verify( expectation );
+  }
 
-        MondrianExpectation expectation = MondrianExpectation.newBuilder()
-                .query( query )
-                .expectResultSet(true)
-                .columns("store_type","has_coffee_bar","store_sqft")
-                .rows("Supermarket|null|null","Supermarket|null|39696")
-                .build();
-        MondrianContext.forCatalog(catalog).verify(expectation);
-    }
+  @Test
+  public void testDrillOnDegenerateSchema() throws Exception {
+    String query =
+      "DRILLTHROUGH\n"
+      + "SELECT {[customer].[customer id].[5]} ON 0\n"
+      + "FROM Sales\n";
 
-    @Test
-    // fails on Impala
-    public void testFactTableWithSpaceInHierarchyName() throws Exception {
-        String query = "DRILLTHROUGH\n"
-                + "maxrows 2\n"
-                + "SELECT {[Store Type].[Supermarket]} ON 0,\n"
-                + "{[Has coffee bar]} ON 1\n"
-                + "FROM Store\n";
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query( query )
+      .expectResultSet()
+      .rows( "5|2" )
+      .sql(
+        "select\n"
+        + "    sales_fact_1997.customer_id as customer id,\n"
+        + "    sales_fact_1997.unit_sales as Unit Sales\n"
+        + "from\n"
+        + "    sales_fact_1997 as sales_fact_1997\n"
+        + "where\n"
+        + "    sales_fact_1997.customer_id = 5\n"
+        + "order by\n"
+        + "    sales_fact_1997.customer_id ASC" )
+      .build();
+    MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER ).verify( expectation );
+  }
 
-        MondrianExpectation expectation = MondrianExpectation.newBuilder()
-                .query( query )
-                .expectResultSet(true)
-                .columns("store_type","has_coffee_bar","store_sqft")
-                .rows("Supermarket|null|null","Supermarket|null|39696")
-                .partial()
-                .build();
-        MondrianContext.defaultContext().verify(expectation);
-    }
+  @Test
+  public void testDrillOnDegenerateSchemaNoSpaces() throws Exception {
+    String query =
+      "DRILLTHROUGH\n"
+      + "SELECT {[customer].[customerid].[5]} ON 0\n"
+      + "FROM Sales\n";
 
+    MondrianExpectation expectation = MondrianExpectation.newBuilder()
+      .query( query )
+      .expectResultSet()
+      .rows( "5|2" )
+      .sql(
+        "select\n"
+        + "    sales_fact_1997.customer_id as customerid,\n"
+        + "    sales_fact_1997.unit_sales as UnitSales\n"
+        + "from\n"
+        + "    sales_fact_1997 as sales_fact_1997\n"
+        + "where\n"
+        + "    sales_fact_1997.customer_id = 5\n"
+        + "order by\n"
+        + "    "
+        + getOrderExpression(
+            "customerid",
+            "sales_fact_1997.customer_id",
+            true, true, false ) )
+      .build();
+    MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER_NO_SPACES ).verify( expectation );
+  }
 }

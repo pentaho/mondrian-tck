@@ -119,7 +119,7 @@ public class MondrianContext extends Context {
     final OlapStatement statement = olapConnection.createStatement();
     if ( expectation.isExpectResultSet() ) {
       // some MDX queries (e.g. drillthrough) return ResultSet object
-      ResultSet rs = statement.executeQuery(expectation.getQuery());
+      ResultSet rs = statement.executeQuery( expectation.getQuery() );
       RolapUtil.setHook( existingHook );
       expectation.verify( rs, sqls, olapConnection.unwrap( RolapConnection.class ).getSchema().getDialect() );
     } else {
