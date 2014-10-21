@@ -45,7 +45,7 @@
     <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
-      <version>1.2.1</version>
+      <version>1.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -73,17 +73,17 @@
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-hadoop-hive-jdbc-shim</artifactId>
-      <version>TRUNK-SNAPSHOT</version>
+      <version>5.1.0.0-752</version>
     </dependency>
     <dependency>
       <groupId>pentaho-kettle</groupId>
       <artifactId>kettle-core</artifactId>
-      <version>TRUNK-SNAPSHOT</version>
+      <version>5.1.0.0-752</version>
     </dependency>
     <dependency>
       <groupId>pentaho-kettle</groupId>
       <artifactId>kettle-engine</artifactId>
-      <version>TRUNK-SNAPSHOT</version>
+      <version>5.1.0.0-752</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -91,8 +91,64 @@
       <version>17.0</version>
     </dependency>
   </dependencies>
-  
-    
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0-alpha-2</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>test.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- We generate the mondrian.properties file here -->
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>generate-test-resources</phase>
+            <configuration>
+              <tasks>
+                <echo file="mondrian.properties">
+mondrian.jdbcDrivers=${jdbc.drivers}
+mondrian.test.connectString=jdbc:mondrian:Catalog=FoodMart.xml;JDBC="${jdbc.url}"${jdbc.extra.parameters}
+mondrian.foodmart.jdbcURL=${jdbc.url}
+mondrian.foodmart.jdbcUser=${jdbc.user}
+mondrian.foodmart.jdbcPassword=${jdbc.password}
+mondrian.rolap.generate.formatted.sql=true
+</echo>
+              </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>surefire-report-maven-plugin</artifactId>
+      </plugin>
+    </plugins> 
+  </reporting>
+
   <!-- this is for bootstrapping only; you should really just add this to your settings.xml -->
   <repositories>
     <repository>
@@ -133,7 +189,7 @@
           <groupId>pentaho</groupId>
           <artifactId>pentaho-big-data-plugin</artifactId>
           <type>zip</type>
-          <version>TRUNK-SNAPSHOT</version>
+          <version>5.1.0.0-752</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
