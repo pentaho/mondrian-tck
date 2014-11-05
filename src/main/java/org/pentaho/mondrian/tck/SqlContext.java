@@ -49,7 +49,7 @@ public class SqlContext extends Context {
   private static final ScheduledExecutorService executor =
       Util.getScheduledExecutorService(10, "SqlContext.canceler" );
 
-  private Connection connection;
+  Connection connection;
   private final AtomicBoolean isStale = new AtomicBoolean( false );
 
   static {

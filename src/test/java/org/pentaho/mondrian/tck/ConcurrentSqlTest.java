@@ -21,127 +21,90 @@
  ******************************************************************************/
 package org.pentaho.mondrian.tck;
 
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 public class ConcurrentSqlTest extends TestBase {
 
-  private final SqlExpectation[] queries =
-    new SqlExpectation[] {
-      SqlExpectation.newBuilder()
-        .query( "select unit_sales sum_sales from sales_fact_1997" )
-        .columns( "sum_sales" )
-        .rows( "2" )
-        .partial()
-        .cancelTimeout( 1000 )
-        .build(),
-      SqlExpectation.newBuilder()
-        .query( "select unit_sales min_sales from sales_fact_1997" )
-        .columns( "min_sales" )
-        .rows( "2" )
-        .partial()
-        .cancelTimeout( 1000 )
-        .build(),
-      SqlExpectation.newBuilder()
-        .query( "select unit_sales max_sales from sales_fact_1997" )
-        .columns( "max_sales" )
-        .rows( "2" )
-        .partial()
-        .cancelTimeout( 1000 )
-        .build(),
+  @Test
+  public void testConcurrentSqlSimulatedPool() throws Exception {
+    final AtomicReference<Throwable> error =
+        new AtomicReference<Throwable>();
+    final List<Statement> stmts = Collections
+        .synchronizedList( new CopyOnWriteArrayList<Statement>() );
+
+    final ExecutorService es = Executors
+      .newCachedThreadPool( new ThreadFactory() {
+        public Thread newThread( Runnable r ) {
+          final Thread t = Executors.defaultThreadFactory().newThread( r );
+          t.setDaemon( true );
+          return t;
+        }
+      } );
+
+    /*
+     * We will use a single connection to provide statements. This simulates a
+     * connection pool where the same connection can be re-used, as long as we
+     * cancel the statements before creating a new statement.
+     */
+    final Connection conn = SqlContext.defaultContext().connection;
+
+    Runnable r = new Runnable() {
+      public void run() {
+        try {
+          final Statement stmt = conn.createStatement();
+          stmts.add( stmt );
+
+          stmt.execute( "select sum(sales_fact_1997.unit_sales) as m0 from sales_fact_1997 sales_fact_1997" );
+
+          final ResultSet resultSet = stmt.getResultSet();
+          for ( int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++ ) {
+            resultSet.getMetaData().getColumnName( i );
+          }
+
+          while ( resultSet.next() ) {
+            for ( int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++ ) {
+              resultSet.getString( i );
+            }
+          }
+
+          stmt.close();
+
+        } catch ( Throwable t ) {
+          error.set( t );
+          t.printStackTrace();
+        }
+      };
+
     };
 
-  /*
-   * This test is disabled for now. It isn't deterministic and needs more work.
-   */
-  // @Test( timeout = 120000 )
-  public void testConcurrentSqlNoPool() throws Exception {
-    runTest( queries, 5, 50, false );
-  }
-
-  /*
-   * This test is disabled for now. It isn't deterministic and needs more work.
-   */
-  // @Test( timeout = 120000 )
-  public void testConcurrentSqlWithPool() throws Exception {
-    runTest( queries, 5, 50, true );
-  }
-
-  void runTest(
-    final SqlExpectation[] tests,
-    int nbThreads,
-    int nbRuns,
-    final boolean useDBCP ) throws Exception {
-
-    final Random random = new Random();
-    final List<Future<Throwable>> futures = new ArrayList<Future<Throwable>>();
-
-    // Create an executor
-    final ExecutorService executor =
-      Executors.newFixedThreadPool(
-        nbThreads,
-        new ThreadFactory() {
-          private final AtomicInteger counter = new AtomicInteger( 0 );
-          public Thread newThread( Runnable r ) {
-            final Thread t =
-                Executors.defaultThreadFactory().newThread( r );
-            t.setDaemon( true );
-            t.setName( "ConcurrentSqlTest" + '_' + counter.incrementAndGet() );
-            return t;
-          }
-        } );
-
-    // Send a buncha tasks to be performed.
-    for ( int i = 0; i < nbRuns; i++ ) {
-      futures.add(
-        executor.submit(
-          new Callable<Throwable>() {
-            public Throwable call() throws Exception {
-              try {
-                // Create a context with DBCP
-                SqlContext sqlContext =
-                  useDBCP
-                    ? SqlContext.dbcpContext()
-                    : SqlContext.defaultContext();
-
-                // Run and validate.
-                sqlContext.verify( tests[ random.nextInt( tests.length ) ] );
-
-              } catch ( Throwable t ) {
-                return t;
-              }
-              return null;
-            }
-          } ) );
+    for ( int i = 0; i < 10; i++ ) {
+      es.submit( r );
+      Thread.sleep( 500 );
+      stmts.get( i ).cancel();
+      Thread.sleep( 100 );
     }
 
-    // Iterate over the jobs, but cancel half of them, while for the other
-    // half to complete. This will allow to follow where the pool is at and
-    // cancel active ones
-    Throwable error = null;
-    for ( Future<Throwable> future : futures ) {
-      final Throwable t = future.get();
-      if ( error == null && t != null ) {
-        t.printStackTrace();
-        error = t;
-      }
+    // Check failure.
+    try {
+      Assert.assertNull(
+        "Driver is not thread safe. Exceptions were encountered.",
+        error.get() );
+    } finally {
+      es.shutdown();
+      es.awaitTermination( 30, TimeUnit.SECONDS );
     }
-
-    // Check the results.
-    Assert.assertTrue(
-      "Errors detected while running ConcurrentSqlTest:"
-        + ( error == null
-          ? null
-          : error.getMessage() ),
-      error == null );
   }
 }
