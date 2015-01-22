@@ -122,6 +122,7 @@ public class ResultSetValidator {
         switch ( rs.getMetaData().getColumnType( j ) ) {
           case Types.DOUBLE:
           case Types.DECIMAL:
+          case Types.NUMERIC:
             curRow.append( new DecimalFormat().format( rawValue ) );
             break;
           default:
