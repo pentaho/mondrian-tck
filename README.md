@@ -113,8 +113,24 @@ To test a specific plugin version, you will also need to edit pom.xml:
       <version>5.1.0.0-752</version> <!-- This is where you pick a version -->
     </dependency>
   </dependencies>
-  ...
-</project>
+
+(... and lower down ...)
+
+  <profiles>
+    <profile>
+      <id>bigdata</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>pentaho</groupId>
+          <artifactId>pentaho-big-data-plugin</artifactId>
+          <type>zip</type>
+          <version>5.1.0.0-752</version> <!-- This is where you pick a version -->
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
 ```
 
 Extending the test suite
