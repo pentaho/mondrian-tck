@@ -78,6 +78,44 @@ To choose which version of Mondrian to test, you need to edit the file pom.xml a
 </project>
 ```
 
+Testing the Pentaho Big Data Shims
+----------------------------------
+To use the TCK over the Pentaho Big Data Plugin shims, you will need to verify these properties in test.properties:
+
+```
+# These properties are required when testing Pentaho's shims only.
+big-data-plugin.folder=pentaho-big-data-plugin
+register.big-data-plugin=false
+active.hadoop.configuration=cdh50
+```
+
+You need only to set 'register.big-data-plugin' to 'true', and the property 'active.hadoop.configuration' must be set to a valid shim identifier.
+
+To test a specific plugin version, you will also need to edit pom.xml:
+
+```
+<project>
+  ...
+  <dependencies>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>pentaho-hadoop-hive-jdbc-shim</artifactId>
+      <version>5.1.0.0-752</version> <!-- This is where you pick a version -->
+    </dependency>
+    <dependency>
+      <groupId>pentaho-kettle</groupId>
+      <artifactId>kettle-core</artifactId>
+      <version>5.1.0.0-752</version> <!-- This is where you pick a version -->
+    </dependency>
+    <dependency>
+      <groupId>pentaho-kettle</groupId>
+      <artifactId>kettle-engine</artifactId>
+      <version>5.1.0.0-752</version> <!-- This is where you pick a version -->
+    </dependency>
+  </dependencies>
+  ...
+</project>
+```
 
 Extending the test suite
 ------------------------
