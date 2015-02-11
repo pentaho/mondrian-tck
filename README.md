@@ -59,6 +59,26 @@ Alternatively, you can also refer to JAR files on your local system within the p
 </project>
 ```
 
+Which version of Mondrian am I testing?
+-----------------------------
+To choose which version of Mondrian to test, you need to edit the file pom.xml and change the version defined in there.
+
+```
+<project>
+  ...
+  <dependencies>
+    <dependency>
+      <groupId>pentaho</groupId>
+      <artifactId>mondrian</artifactId>
+      <version>TRUNK-SNAPSHOT</version> <!-- This is where you pick a version -->
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+  ...
+</project>
+```
+
+
 Extending the test suite
 ------------------------
 
