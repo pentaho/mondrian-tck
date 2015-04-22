@@ -67,29 +67,29 @@ public class ResultSetValidator {
     if ( columnsPartial ) {
       for ( String column : columns ) {
         assertTrue(
-          String.format(
-            "Column '%s' doesn't exist in the columns result set '%s'",
-            column,
-            Arrays.toString( actuals ) ),
-          Arrays.asList( actuals ).contains( column.toLowerCase() ) );
+            String.format(
+              "Column '%s' doesn't exist in the columns result set '%s'",
+              column,
+              Arrays.toString( actuals ) ),
+            Arrays.asList( actuals ).contains( column.toLowerCase() ) );
       }
     } else {
       assertArrayEquals(
-        "Column names do not correspond to those expected.",
-        columns,
-        actuals );
+          "Column names do not correspond to those expected.",
+          columns,
+          actuals );
     }
   }
 
   public void validateRows( ResultSet rs ) throws Exception {
     final int nbCols =
-      columnsPartial
-        ? columns.length
-        : rs.getMetaData().getColumnCount();
+        columnsPartial
+          ? columns.length
+          : rs.getMetaData().getColumnCount();
     final List<String> columnsList =
-      columnsPartial
-        ? Arrays.asList( columns )
-        : new ArrayList<String>();
+        columnsPartial
+          ? Arrays.asList( columns )
+          : new ArrayList<String>();
 
     int rowNum = -1;
 
@@ -134,7 +134,7 @@ public class ResultSetValidator {
           case Types.BIGINT:
           case Types.INTEGER:
           case Types.SMALLINT:
-            if (rawValue == null) {
+            if ( rawValue == null ) {
               curRow.append( "null" );
             } else {
               curRow.append( new DecimalFormat().format( rawValue ) );
@@ -146,7 +146,7 @@ public class ResultSetValidator {
 
 
         // If there are still rows and we're not in partial mode, that's bad
-        if (rows != null
+        if ( rows != null
             && ( !partial && rowNum > ( rows.length - 1 ) ) ) {
           fail( "Expected number of rows doesn't match the result." );
         }
@@ -186,14 +186,14 @@ public class ResultSetValidator {
         continue;
       }
       assertEquals(
-        "Wrong meta type for column "
-          + rs.getMetaData().getColumnName( i )
-          + ", expected meta type "
-          + types[i - 1]
-          + " but actual meta type was "
-          + rs.getMetaData().getColumnType( i ),
-        types[i - 1],
-        rs.getMetaData().getColumnType( i ) );
+          "Wrong meta type for column "
+            + rs.getMetaData().getColumnName( i )
+            + ", expected meta type "
+            + types[i - 1]
+            + " but actual meta type was "
+            + rs.getMetaData().getColumnType( i ),
+          types[i - 1],
+          rs.getMetaData().getColumnType( i ) );
     }
   }
 

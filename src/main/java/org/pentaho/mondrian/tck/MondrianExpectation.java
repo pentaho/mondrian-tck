@@ -117,8 +117,8 @@ public class MondrianExpectation {
         }
       }
       assertTrue(
-        "Expected sql was not executed: \n" + expectedSql,
-        found );
+          "Expected sql was not executed: \n" + expectedSql,
+          found );
     }
   }
 

@@ -46,13 +46,13 @@ public class ConcurrentSqlTest extends TestBase {
         .synchronizedList( new CopyOnWriteArrayList<Statement>() );
 
     final ExecutorService es = Executors
-      .newCachedThreadPool( new ThreadFactory() {
-        public Thread newThread( Runnable r ) {
-          final Thread t = Executors.defaultThreadFactory().newThread( r );
-          t.setDaemon( true );
-          return t;
-        }
-      } );
+        .newCachedThreadPool( new ThreadFactory() {
+          public Thread newThread( Runnable r ) {
+            final Thread t = Executors.defaultThreadFactory().newThread( r );
+            t.setDaemon( true );
+            return t;
+          }
+        } );
 
     /*
      * We will use a single connection to provide statements. This simulates a
@@ -95,7 +95,7 @@ public class ConcurrentSqlTest extends TestBase {
       Thread.sleep( 500 );
       try {
         stmts.get( i ).cancel();
-      } catch (Throwable t) {
+      } catch ( Throwable t ) {
         // no op
       }
       Thread.sleep( 100 );
@@ -104,8 +104,8 @@ public class ConcurrentSqlTest extends TestBase {
     // Check failure.
     try {
       Assert.assertNull(
-        "Driver is not thread safe. Exceptions were encountered.",
-        error.get() );
+          "Driver is not thread safe. Exceptions were encountered.",
+          error.get() );
     } finally {
       es.shutdown();
       es.awaitTermination( 30, TimeUnit.SECONDS );

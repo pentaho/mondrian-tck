@@ -34,9 +34,9 @@ public class DistinctCountTest {
   public void testSingleColumnSQL() throws Exception {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
-      .query( "select count(distinct(customer_id)) from sales_fact_1997" )
-      .rows( "5,581" )
-      .build();
+        .query( "select count(distinct(customer_id)) from sales_fact_1997" )
+        .rows( "5,581" )
+        .build();
     sqlContext.verify( sqlExpectation );
   }
 
@@ -44,9 +44,9 @@ public class DistinctCountTest {
   public void testMultipleColumnSQL() throws Exception {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
-      .query( "select count(distinct(customer_id)), count(distinct(product_id))  from sales_fact_1997" )
-      .rows( "5,581|1,559" )
-      .build();
+        .query( "select count(distinct(customer_id)), count(distinct(product_id))  from sales_fact_1997" )
+        .rows( "5,581|1,559" )
+        .build();
     sqlContext.verify( sqlExpectation );
   }
 
@@ -54,9 +54,9 @@ public class DistinctCountTest {
   public void testCompoundColumnSQL() throws Exception {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
-      .query( "select count( distinct customer_id, product_id) from sales_fact_1997" )
-      .rows( "85,452" )
-      .build();
+        .query( "select count( distinct customer_id, product_id) from sales_fact_1997" )
+        .rows( "85,452" )
+        .build();
     sqlContext.verify( sqlExpectation );
   }
 

@@ -81,10 +81,10 @@ public class SqlContext extends Context {
     // Load the drivers
     RolapUtil.loadDrivers( MondrianProperties.instance().JdbcDrivers.get() );
     Connection connection =
-      DriverManager.getConnection(
-        connectionString,
-        MondrianProperties.instance().TestJdbcUser.get(),
-        MondrianProperties.instance().TestJdbcPassword.get() );
+        DriverManager.getConnection(
+          connectionString,
+          MondrianProperties.instance().TestJdbcUser.get(),
+          MondrianProperties.instance().TestJdbcPassword.get() );
     return new SqlContext( connection );
   }
 
