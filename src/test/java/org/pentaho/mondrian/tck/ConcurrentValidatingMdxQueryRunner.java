@@ -55,10 +55,10 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
    * @param queriesAndResults The array of pairs of query and expected result
    */
   public ConcurrentValidatingMdxQueryRunner(
-    int numSeconds,
-    boolean useRandomQuery,
-    boolean usePooling,
-    QueryAndResult[] queriesAndResults ) {
+      int numSeconds,
+      boolean useRandomQuery,
+      boolean usePooling,
+      QueryAndResult[] queriesAndResults ) {
     this.mdxQueries = queriesAndResults;
     this.mRunTime = numSeconds * 1000;
     this.mRandomQueries = useRandomQuery;
@@ -87,10 +87,10 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
           mRunCount++;
 
           MondrianExpectation expectation = MondrianExpectation.newBuilder()
-            .query( mdxQueries[queryIndex].query )
-            .result( mdxQueries[queryIndex].result )
-            .canBeRandomlyCanceled()
-            .build();
+              .query( mdxQueries[queryIndex].query )
+              .result( mdxQueries[queryIndex].result )
+              .canBeRandomlyCanceled()
+              .build();
           MondrianContext
             .forCatalog( FoodMartCatalogs.FLAT_WITH_FEW_DIMS, usePooling )
             .verify( expectation );
@@ -99,7 +99,7 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
 
         } catch ( Throwable e ) {
           mExceptions.add(
-            new Exception(
+              new Exception(
                 "Exception occurred in iteration " + mRunCount
                 + " of thread " + Thread.currentThread().getName(),
                 e ) );
@@ -116,11 +116,11 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
    */
   private void report() {
     String message = MessageFormat.format(
-      " {0} ran {1} queries, {2} successfully in {3} milliseconds",
-      threadName,
-      mRunCount,
-      mSuccessCount,
-      mStopTime - mStartTime );
+        " {0} ran {1} queries, {2} successfully in {3} milliseconds",
+        threadName,
+        mRunCount,
+        mSuccessCount,
+        mStopTime - mStartTime );
 
     LOGGER.info( message );
 
@@ -152,7 +152,7 @@ public class ConcurrentValidatingMdxQueryRunner extends Thread {
     List<Throwable> allExceptions = new ArrayList<Throwable>();
 
     MondrianContext ctx =
-      MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_FEW_DIMS, usePooling );
+        MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_FEW_DIMS, usePooling );
     ctx.olapConnection.unwrap( RolapConnection.class )
       .getCacheControl( null )
         .flushSchemaCache();

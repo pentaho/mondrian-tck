@@ -37,7 +37,7 @@ public class JoinTest {
   @Test
   public void testOneWayJoin89() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         // We join two tables in the WHERE clause and select a column in each
         .query( "select warehouse.warehouse_id, warehouse_class.description from warehouse, warehouse_class where warehouse.warehouse_class_id = warehouse_class.warehouse_class_id" )
@@ -67,7 +67,7 @@ public class JoinTest {
   @Test
   public void testOneWayJoin92() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         // We join two tables in the FROM clause and select a column in each
         .query( "select warehouse.warehouse_id, warehouse_class.description from warehouse join warehouse_class on (warehouse.warehouse_class_id = warehouse_class.warehouse_class_id)" )
@@ -98,10 +98,10 @@ public class JoinTest {
   @Test
   public void testImplicitJoin() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         // We put two tables in the FROM clause and we want the cross product of both sets of rows.
-        .query( "select warehouse.warehouse_id, warehouse_class.description from warehouse, warehouse_class" )
+        .query( "select warehouse.warehouse_id, warehouse_class.description from warehouse, warehouse_class order by warehouse.warehouse_id, warehouse_class.description" )
 
         // We expect two columns.
         .columns( "warehouse_id", "description" )
@@ -110,7 +110,7 @@ public class JoinTest {
         .types( Types.INTEGER, Types.VARCHAR )
 
         // We will validate the first rows content.
-        .rows( "1|Small Independent" )
+        .rows( "1|Large Independent" )
 
         // We won't validate all rows.
         .partial()
@@ -128,7 +128,7 @@ public class JoinTest {
   @Test
   public void testTwoWayJoin89() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse.warehouse_id, warehouse_class.description, inventory_fact_1997.store_id from warehouse, warehouse_class, inventory_fact_1997 where warehouse.warehouse_class_id = warehouse_class.warehouse_class_id and inventory_fact_1997.warehouse_id = warehouse.warehouse_id" )
 
@@ -152,7 +152,7 @@ public class JoinTest {
   @Test
   public void testTwoWayJoin92() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse.warehouse_id, warehouse_class.description, inventory_fact_1997.store_id from warehouse join warehouse_class on (warehouse.warehouse_class_id = warehouse_class.warehouse_class_id) join inventory_fact_1997 on (inventory_fact_1997.warehouse_id = warehouse.warehouse_id)" )
 
@@ -181,7 +181,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoin89() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from warehouse, inventory_fact_1997, product, time_by_day\n"
@@ -213,7 +213,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoin92() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from inventory_fact_1997\n"
@@ -249,7 +249,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoinPlusSingleStarLeaf89() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse_class.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from warehouse, inventory_fact_1997, product, time_by_day, warehouse_class\n"
@@ -281,7 +281,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoinPlusSingleStarLeaf92() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse_class.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from inventory_fact_1997\n"
@@ -320,7 +320,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoinPlusDoubleStarLeaf89() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse_class.description, wc2.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from warehouse, inventory_fact_1997, product, time_by_day, warehouse_class, warehouse_class as wc2\n"
@@ -358,7 +358,7 @@ public class JoinTest {
   @Test
   public void testThreeWayJoinPlusDoubleStarLeaf92() throws Exception {
     final SqlExpectation expct =
-      newBuilder()
+        newBuilder()
 
         .query( "select warehouse_class.description, wc2.description, warehouse.warehouse_id, inventory_fact_1997.store_id, time_by_day.time_id, product.product_id\n"
           + "from inventory_fact_1997\n"
@@ -388,11 +388,11 @@ public class JoinTest {
   @Test
   public void testNonEmptyCrossJoinDegenerate() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
-      .query(
+        .query(
         "select "
         + " non empty { CrossJoin([customer].[customer].members, [store].[store].members ) } on 0"
         + " from [Sales]" )
-      .sql(
+        .sql(
           "select\n"
           + "    sales_fact_1997.customer_id as c0,\n"
           + "    sales_fact_1997.store_id as c1\n"
@@ -401,7 +401,7 @@ public class JoinTest {
           + "group by\n"
           + "    sales_fact_1997.customer_id,\n"
           + "    sales_fact_1997.store_id\n" )
-      .build();
+        .build();
     MondrianContext.forCatalog(
       "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
@@ -431,11 +431,11 @@ public class JoinTest {
   @Test
   public void testNonEmptyCrossJoinStar() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
-      .query(
+        .query(
         "select "
         + " non empty { CrossJoin([customer].[customer].members, [store].[store].members ) } on 0"
         + " from [Sales]" )
-      .sql(
+        .sql(
           "select\n"
           + "    customer.customer_id as c0,\n"
           + "    store.store_id as c1\n"
@@ -450,7 +450,7 @@ public class JoinTest {
           + "group by\n"
           + "    customer.customer_id,\n"
           + "    store.store_id\n" )
-      .build();
+        .build();
     MondrianContext.forCatalog(
       "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
@@ -478,11 +478,11 @@ public class JoinTest {
   @Test
   public void testNonEmptyCrossJoinSnowflake() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
-      .query(
+        .query(
         "select "
         + " non empty { CrossJoin([product].[product family].members, [store].[store].members ) } on 0"
         + " from [Sales]" )
-      .sql(
+        .sql(
         "select\n"
         + "    product_class.product_family as c0,\n"
         + "    store.store_id as c1\n"
@@ -500,7 +500,7 @@ public class JoinTest {
         + "group by\n"
         + "    product_class.product_family,\n"
         + "    store.store_id\n" )
-      .build();
+        .build();
     MondrianContext.forCatalog(
       "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"

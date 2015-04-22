@@ -53,27 +53,27 @@ import com.google.common.cache.LoadingCache;
 public class MondrianContext extends Context {
 
   private static final LoadingCache<String, MondrianContext> instances =
-    CacheBuilder.newBuilder().build( new CacheLoader<String, MondrianContext>() {
-      @Override
-      public MondrianContext load( String key ) throws Exception {
-        Connection connection = DriverManager.getConnection( key );
-        OlapConnection olapConnection = connection.unwrap( OlapConnection.class );
-        return new MondrianContext( olapConnection );
-      }
-    } );
+      CacheBuilder.newBuilder().build( new CacheLoader<String, MondrianContext>() {
+        @Override
+        public MondrianContext load( String key ) throws Exception {
+          Connection connection = DriverManager.getConnection( key );
+          OlapConnection olapConnection = connection.unwrap( OlapConnection.class );
+          return new MondrianContext( olapConnection );
+        }
+      } );
 
   private static final LoadingCache<String, Path> catalogs =
-    CacheBuilder.newBuilder().build( new CacheLoader<String, Path>() {
-      @Override
-      public Path load( String key ) throws Exception {
-        Path catalogFile = Files.createTempFile( "temp", ".xml" );
-        catalogFile.toFile().deleteOnExit();
-        try ( Writer writer = Files.newBufferedWriter( catalogFile, Charset.defaultCharset() ) ) {
-          writer.write( key );
+      CacheBuilder.newBuilder().build( new CacheLoader<String, Path>() {
+        @Override
+        public Path load( String key ) throws Exception {
+          Path catalogFile = Files.createTempFile( "temp", ".xml" );
+          catalogFile.toFile().deleteOnExit();
+          try ( Writer writer = Files.newBufferedWriter( catalogFile, Charset.defaultCharset() ) ) {
+            writer.write( key );
+          }
+          return catalogFile;
         }
-        return catalogFile;
-      }
-    } );
+      } );
 
   OlapConnection olapConnection;
 
@@ -194,5 +194,10 @@ public class MondrianContext extends Context {
     } else {
       return connectString.concat( ";PoolNeeded=" + String.valueOf( withPooling ) );
     }
+  }
+
+  public static int getMondrianComplianceLevel() {
+    return Integer.valueOf(
+      testProperties.getProperty( "mondrian.compliance.level" ) );
   }
 }

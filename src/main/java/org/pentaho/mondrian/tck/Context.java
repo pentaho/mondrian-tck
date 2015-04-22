@@ -38,8 +38,8 @@ abstract class Context {
       testProperties = loadTestProperties();
       if ( Boolean.parseBoolean( testProperties.getProperty( "register.big-data-plugin" ) ) ) {
         BigDataPluginUtil.prepareBigDataPlugin(
-          Paths.get( testProperties.getProperty( "big-data-plugin.folder" ) ),
-          testProperties.getProperty( "active.hadoop.configuration" ) );
+            Paths.get( testProperties.getProperty( "big-data-plugin.folder" ) ),
+            testProperties.getProperty( "active.hadoop.configuration" ) );
       }
     } catch ( Exception e ) {
       throw new RuntimeException( e );

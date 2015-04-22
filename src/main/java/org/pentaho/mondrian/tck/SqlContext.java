@@ -81,10 +81,10 @@ public class SqlContext extends Context {
     // Load the drivers
     RolapUtil.loadDrivers( MondrianProperties.instance().JdbcDrivers.get() );
     Connection connection =
-      DriverManager.getConnection(
-        connectionString,
-        MondrianProperties.instance().TestJdbcUser.get(),
-        MondrianProperties.instance().TestJdbcPassword.get() );
+        DriverManager.getConnection(
+          connectionString,
+          MondrianProperties.instance().TestJdbcUser.get(),
+          MondrianProperties.instance().TestJdbcPassword.get() );
     return new SqlContext( connection );
   }
 
@@ -145,5 +145,10 @@ public class SqlContext extends Context {
 
   public Dialect getDialect() {
     return DialectManager.createDialect( null, connection );
+  }
+
+  public static int getSqlComplianceLevel() {
+    return Integer.valueOf(
+      testProperties.getProperty( "sql.compliance.level" ) );
   }
 }

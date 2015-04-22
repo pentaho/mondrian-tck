@@ -23,33 +23,33 @@ package org.pentaho.mondrian.tck;
 
 public class FoodMartCatalogs {
   public static final String FLAT_WITH_CUSTOMER =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "  <Dimension name=\"customer\">\n"
       + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
       + "      <Table name=\"sales_fact_1997\"/>\n"
-      + "      <Level name=\"customer id\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
+      + "      <Level name=\"customer id\" type=\"Integer\" internalType=\"int\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
       + "    </Hierarchy>\n"
       + "  </Dimension>"
       + "    <Measure name=\"Unit Sales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
       + "  </Cube>"
       + "</Schema>";
   public static final String FLAT_WITH_CUSTOMER_NO_SPACES =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"UnitSales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "  <Dimension name=\"customer\">\n"
       + "    <Hierarchy hasAll=\"true\" primaryKey=\"customer_id\">\n"
       + "      <Table name=\"sales_fact_1997\"/>\n"
-      + "      <Level name=\"customerid\" type=\"Integer\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
+      + "      <Level name=\"customerid\" type=\"Integer\" internalType=\"int\" column=\"customer_id\" uniqueMembers=\"true\"/>\n"
       + "    </Hierarchy>\n"
       + "  </Dimension>"
       + "    <Measure name=\"UnitSales\" column=\"unit_sales\" aggregator=\"sum\" formatString=\"Standard\"/>"
       + "  </Cube>"
       + "</Schema>";
   public static final String FLAT_WITH_FEW_DIMS =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "  <Dimension name=\"customer\">\n"
@@ -68,7 +68,7 @@ public class FoodMartCatalogs {
       + "  </Cube>"
       + "</Schema>";
   public static final String STAR_WITH_STORE =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "    <Dimension name=\"Store\" foreignKey=\"store_id\">"
@@ -85,7 +85,7 @@ public class FoodMartCatalogs {
       + "  </Cube>"
       + "</Schema>";
   public static final String SNOWFLAKE_WITH_PRODUCT =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"Unit Sales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "    <Dimension name=\"Product\" foreignKey=\"product_id\">\n"
@@ -111,7 +111,7 @@ public class FoodMartCatalogs {
       + "  </Cube>"
       + "</Schema>";
   public static final String SNOWFLAKE_WITH_PRODUCT_NO_SPACES =
-    "<Schema name=\"FoodMart\">"
+      "<Schema name=\"FoodMart\">"
       + "  <Cube name=\"Sales\" defaultMeasure=\"UnitSales\">"
       + "    <Table name=\"sales_fact_1997\"/>"
       + "    <Dimension name=\"Product\" foreignKey=\"product_id\">\n"

@@ -51,6 +51,7 @@ public class AggregationTest {
   @Test
   public void testSumMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "266,773" ) )
         .sql( getSql( "sum" ) )
@@ -76,6 +77,7 @@ public class AggregationTest {
   @Test
   public void testMinMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "1" ) )
         .sql( getSql( "min" ) )
@@ -102,6 +104,7 @@ public class AggregationTest {
   @Test
   public void testMaxMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "6" ) )
         .sql( getSql( "max" ) )
@@ -119,7 +122,7 @@ public class AggregationTest {
         .query( "select count(unit_sales) count_sales from sales_fact_1997" )
         .columns( "count_sales" )
         .types( Types.BIGINT )
-        .rows( String.valueOf( 86837 ) )
+        .rows( "86,837" )
         .build();
 
     // Validate
@@ -129,6 +132,7 @@ public class AggregationTest {
   @Test
   public void testCountMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "86,837" ) )
         .sql( getSql( "count" ) )
@@ -156,6 +160,7 @@ public class AggregationTest {
   @Test
   public void testCountDistinctMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "6" ) )
         .sql( getSql( "count", true ) )
@@ -209,7 +214,7 @@ public class AggregationTest {
         .query( "select count(*) count_all from sales_fact_1997" )
         .columns( "count_all" )
         .types( Types.BIGINT )
-        .rows( String.valueOf( 86837 ) )
+        .rows( "86,837" )
         .build();
 
     // Validate
@@ -234,6 +239,7 @@ public class AggregationTest {
   @Test
   public void testAvgMondrian() throws Exception {
     MondrianExpectation expectation = MondrianExpectation.newBuilder()
+        .withFreshCache()
         .query( QUERY )
         .result( getResult( "3.07" ) )
         .sql( getSql( "avg" ) )

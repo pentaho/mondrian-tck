@@ -65,7 +65,7 @@ public class NullValuesTest extends TestBase {
   /**
    * Result array parent's id for query with ordering
    */
-  private String[] accountParentIds = {NULL_VALUE, NULL_VALUE, NULL_VALUE, "3000", "3000", "4000", "4000", "4000", "4000", "5000", "5000"};
+  private String[] accountParentIds = {NULL_VALUE, NULL_VALUE, NULL_VALUE, "3,000", "3,000", "4,000", "4,000", "4,000", "4,000", "5,000", "5,000"};
 
   /**
    * Verifies MDX for select account parent by null key

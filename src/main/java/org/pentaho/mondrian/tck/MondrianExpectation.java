@@ -92,6 +92,11 @@ public class MondrianExpectation {
   }
 
   protected void verifySqls( List<String> sqls, Dialect dialect ) {
+    // This is  level 2 check
+    if ( MondrianContext.getMondrianComplianceLevel() < 2 ) {
+      return;
+    }
+
     List<String> cleanSqls = new ArrayList<>();
     for ( String sql : sqls ) {
       sql = cleanLineEndings( sql );
@@ -112,8 +117,8 @@ public class MondrianExpectation {
         }
       }
       assertTrue(
-        "Expected sql was not executed: \n" + expectedSql,
-        found );
+          "Expected sql was not executed: \n" + expectedSql,
+          found );
     }
   }
 
@@ -138,7 +143,9 @@ public class MondrianExpectation {
   }
 
   private static String cleanTicks( String sql, Dialect dialect ) {
-    return sql.replaceAll( "\\" + dialect.getQuoteIdentifierString(), "" );
+    return sql
+      .replaceAll( "'", "" )
+      .replaceAll( "\\" + dialect.getQuoteIdentifierString(), "" );
   }
 
   private static String cleanAlias( String sql, Dialect dialect ) {

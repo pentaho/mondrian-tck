@@ -53,37 +53,43 @@ public class ResultSetValidator {
   }
 
   public void validateColumns( ResultSet rs ) throws Exception {
+    // This is a level 2 check.
+    if ( SqlContext.getSqlComplianceLevel() < 2 ) {
+      return;
+    }
+
     if ( columns == null ) {
       return;
     }
+
     // some drivers return lower case, some - upper.
     final String[] actuals = rsToColumns( rs, true );
     if ( columnsPartial ) {
       for ( String column : columns ) {
         assertTrue(
-          String.format(
-            "Column '%s' doesn't exist in the columns result set '%s'",
-            column,
-            Arrays.toString( actuals ) ),
-          Arrays.asList( actuals ).contains( column.toLowerCase() ) );
+            String.format(
+              "Column '%s' doesn't exist in the columns result set '%s'",
+              column,
+              Arrays.toString( actuals ) ),
+            Arrays.asList( actuals ).contains( column.toLowerCase() ) );
       }
     } else {
       assertArrayEquals(
-        "Column names do not correspond to those expected.",
-        columns,
-        actuals );
+          "Column names do not correspond to those expected.",
+          columns,
+          actuals );
     }
   }
 
   public void validateRows( ResultSet rs ) throws Exception {
     final int nbCols =
-      columnsPartial
-        ? columns.length
-        : rs.getMetaData().getColumnCount();
+        columnsPartial
+          ? columns.length
+          : rs.getMetaData().getColumnCount();
     final List<String> columnsList =
-      columnsPartial
-        ? Arrays.asList( columns )
-        : new ArrayList<String>();
+        columnsPartial
+          ? Arrays.asList( columns )
+          : new ArrayList<String>();
 
     int rowNum = -1;
 
@@ -112,7 +118,9 @@ public class ResultSetValidator {
         final Object rawValue = rs.getObject( j );
 
         // Validate types
-        if ( types != null ) {
+        // Types are a level 3 check.
+        if ( types != null
+            && SqlContext.getSqlComplianceLevel() >= 3 ) {
           validateMetaType( rs );
           validateType(rs.getMetaData().getColumnName( j ), rawValue,
               types[j - 1] );
@@ -123,30 +131,42 @@ public class ResultSetValidator {
           case Types.DOUBLE:
           case Types.DECIMAL:
           case Types.NUMERIC:
-            curRow.append( new DecimalFormat().format( rawValue ) );
+          case Types.BIGINT:
+          case Types.INTEGER:
+          case Types.SMALLINT:
+            if ( rawValue == null ) {
+              curRow.append( "null" );
+            } else {
+              curRow.append( new DecimalFormat().format( rawValue ) );
+            }
             break;
           default:
             curRow.append( String.valueOf( rawValue ) );
         }
+
+
+        // If there are still rows and we're not in partial mode, that's bad
+        if ( rows != null
+            && ( !partial && rowNum > ( rows.length - 1 ) ) ) {
+          fail( "Expected number of rows doesn't match the result." );
+        }
       }
 
       // Now validate that row
-      if ( rows != null ) {
-        assertEquals( "Row content doesn't match.", rows[rowNum],
-            curRow.toString() );
-      } else {
-        // There was no row defined. we bail now.
-        break;
-      }
+      // Row content is a level 2 check.
+      if ( SqlContext.getSqlComplianceLevel() >= 2 ) {
+        if ( rows != null ) {
+          assertEquals( "Row content doesn't match.", rows[rowNum],
+              curRow.toString() );
+        } else {
+          // There was no row defined. we bail now.
+          break;
+        }
 
-      // If there are still rows and we're not in partial mode, that's bad
-      if ( !partial && rowNum > ( rows.length - 1 ) ) {
-        fail( "Expected number of rows doesn't match the result." );
-      }
-
-      // Check whether we have reached the limit of the rows to validate
-      if ( partial && rowNum == ( rows.length - 1 ) ) {
-        break;
+        // Check whether we have reached the limit of the rows to validate
+        if ( partial && rowNum == ( rows.length - 1 ) ) {
+          break;
+        }
       }
     }
   }
@@ -166,14 +186,14 @@ public class ResultSetValidator {
         continue;
       }
       assertEquals(
-        "Wrong meta type for column "
-          + rs.getMetaData().getColumnName( i )
-          + ", expected meta type "
-          + types[i - 1]
-          + " but actual meta type was "
-          + rs.getMetaData().getColumnType( i ),
-        types[i - 1],
-        rs.getMetaData().getColumnType( i ) );
+          "Wrong meta type for column "
+            + rs.getMetaData().getColumnName( i )
+            + ", expected meta type "
+            + types[i - 1]
+            + " but actual meta type was "
+            + rs.getMetaData().getColumnType( i ),
+          types[i - 1],
+          rs.getMetaData().getColumnType( i ) );
     }
   }
 
