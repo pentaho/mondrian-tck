@@ -131,7 +131,11 @@ public class DrillthroughTest extends TestBase {
         + "where\n"
         + "    sales_fact_1997.customer_id = 5\n"
         + "order by\n"
-        + "    sales_fact_1997.customer_id ASC" )
+        + "    "
+        + getOrderExpression(
+          "customerid",
+          "sales_fact_1997.customer_id",
+          false, true, false ) )
       .build();
     MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER ).verify( expectation );
   }
@@ -160,7 +164,7 @@ public class DrillthroughTest extends TestBase {
         + getOrderExpression(
             "customerid",
             "sales_fact_1997.customer_id",
-            true, true, false ) )
+            false, true, false ) )
       .build();
     MondrianContext.forCatalog( FoodMartCatalogs.FLAT_WITH_CUSTOMER_NO_SPACES ).verify( expectation );
   }

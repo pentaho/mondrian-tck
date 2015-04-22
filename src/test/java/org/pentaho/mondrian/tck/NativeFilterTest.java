@@ -32,7 +32,7 @@ public class NativeFilterTest extends TestBase {
     SqlExpectation expectation = SqlExpectation.newBuilder()
       .query(
         "select customer_id from sales_fact_1997 group by customer_id having sum(sales_fact_1997.unit_sales) > 500" )
-      .rows( "4021" )
+      .rows( "4,021" )
       .build();
     SqlContext.defaultContext().verify( expectation );
   }

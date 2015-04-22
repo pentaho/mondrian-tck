@@ -71,7 +71,7 @@ public class InlineTablesTest extends TestBase {
             + "    time_by_day.the_year,\n"
             + "    nation.nation_name" )
         .columns( "the_year", "nation_name", "sum_sales" )
-        .rows( "1997|USA|266,773" )
+        .rows( "1,997|USA|266,773" )
         .partial()
         .build();
     SqlContext.defaultContext().verify( expct );
@@ -103,7 +103,10 @@ public class InlineTablesTest extends TestBase {
         .sql( "select count(*) from (select distinct\n"
           + "    alt_promotion.promo_id c0\n"
           + "from\n"
-          + "    (select 0 promo_id, 'Promo0' promo_name union all select 1 promo_id, 'Promo1' promo_name) alt_promotion) init" )
+          + "    (select 0 promo_id, 'Promo0' promo_name union all select 1 promo_id, 'Promo1' promo_name) alt_promotion)"
+          + (dialect.requiresAliasForFromQuery()
+            ? " init"
+            : "" ) )
         .sql( "select\n"
           + "    alt_promotion.promo_id c0,\n"
           + "    sum(sales_fact_1997.unit_sales) m0\n"
@@ -175,7 +178,10 @@ public class InlineTablesTest extends TestBase {
         .sql( "select count(*) from (select distinct\n"
             + "    alt_promotion.promo_id c0\n"
             + "from\n"
-            + "    (select 0 promo_id, 'First promo' promo_name union all select 1 promo_id, 'Second promo' promo_name) alt_promotion) init" )
+            + "    (select 0 promo_id, 'First promo' promo_name union all select 1 promo_id, 'Second promo' promo_name) alt_promotion)"
+            + (dialect.requiresAliasForFromQuery()
+              ? " init"
+              : "" ) )
         .sql( "select\n"
             + "    alt_promotion.promo_id c0,\n"
             + "    sum(sales_fact_1997.unit_sales) m0\n"
@@ -253,7 +259,10 @@ public class InlineTablesTest extends TestBase {
       .sql( "select count(*) from (select distinct\n"
         + "    nation.nation_name c0\n"
         + "from\n"
-        + "    (select 'USA' nation_name, 'US' nation_shortcode union all select 'Mexico' nation_name, 'MX' nation_shortcode union all select 'Canada' nation_name, 'CA' nation_shortcode) nation) init" )
+        + "    (select 'USA' nation_name, 'US' nation_shortcode union all select 'Mexico' nation_name, 'MX' nation_shortcode union all select 'Canada' nation_name, 'CA' nation_shortcode) nation)"
+        + (dialect.requiresAliasForFromQuery()
+          ? " init"
+          : "" ) )
       .sql( "select\n"
         + "    time_by_day.the_year c0,\n"
         + "    nation.nation_name c1,\n"
@@ -282,7 +291,7 @@ public class InlineTablesTest extends TestBase {
       + "  <Dimension name=\"Time\" foreignKey=\"time_id\">\n"
       + "   <Hierarchy hasAll=\"false\" primaryKey=\"time_id\">\n"
       + "    <Table name=\"time_by_day\"/>\n"
-      + "    <Level name=\"Year\" column=\"the_year\" type=\"Numeric\" uniqueMembers=\"true\"/>\n"
+      + "    <Level name=\"Year\" column=\"the_year\" type=\"Integer\" internalType=\"int\" uniqueMembers=\"true\"/>\n"
       + "    <Level name=\"Quarter\" column=\"quarter\" uniqueMembers=\"false\"/>\n"
       + "    <Level name=\"Month\" column=\"month_of_year\" type=\"Numeric\" uniqueMembers=\"false\"/>\n"
       + "   </Hierarchy>\n"

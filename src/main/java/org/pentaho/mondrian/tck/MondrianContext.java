@@ -195,4 +195,9 @@ public class MondrianContext extends Context {
       return connectString.concat( ";PoolNeeded=" + String.valueOf( withPooling ) );
     }
   }
+
+  public static int getMondrianComplianceLevel() {
+    return Integer.valueOf(
+      testProperties.getProperty( "mondrian.compliance.level" ) );
+  }
 }

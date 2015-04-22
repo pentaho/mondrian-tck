@@ -68,8 +68,8 @@ public class BigDataPluginUtil {
 
     ArrayList<String> libraries = listLibs( pluginFolder );
     Plugin plugin = new Plugin(
-      new String[] { "HadoopSpoonPlugin" }, LifecyclePluginType.class, LifecycleListener.class, "", "HadoopSpoonPlugin",
-      "", null, false, false, classMap, libraries, null, pluginFolder.toUri().toURL(), null, null, null );
+        new String[] { "HadoopSpoonPlugin" }, LifecyclePluginType.class, LifecycleListener.class, "", "HadoopSpoonPlugin",
+        "", null, false, false, classMap, libraries, null, pluginFolder.toUri().toURL(), null, null, null );
     PluginRegistry.getInstance().registerPlugin( LifecyclePluginType.class, plugin );
   }
 

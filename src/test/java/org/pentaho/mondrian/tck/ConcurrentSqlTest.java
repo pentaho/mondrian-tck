@@ -93,7 +93,11 @@ public class ConcurrentSqlTest extends TestBase {
     for ( int i = 0; i < 10; i++ ) {
       es.submit( r );
       Thread.sleep( 500 );
-      stmts.get( i ).cancel();
+      try {
+        stmts.get( i ).cancel();
+      } catch (Throwable t) {
+        // no op
+      }
       Thread.sleep( 100 );
     }
 

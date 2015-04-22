@@ -146,4 +146,9 @@ public class SqlContext extends Context {
   public Dialect getDialect() {
     return DialectManager.createDialect( null, connection );
   }
+
+  public static int getSqlComplianceLevel() {
+    return Integer.valueOf(
+      testProperties.getProperty( "sql.compliance.level" ) );
+  }
 }

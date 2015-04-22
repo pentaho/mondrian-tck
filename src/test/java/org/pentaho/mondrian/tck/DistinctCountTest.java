@@ -35,7 +35,7 @@ public class DistinctCountTest {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
       .query( "select count(distinct(customer_id)) from sales_fact_1997" )
-      .rows( "5581" )
+      .rows( "5,581" )
       .build();
     sqlContext.verify( sqlExpectation );
   }
@@ -45,7 +45,7 @@ public class DistinctCountTest {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
       .query( "select count(distinct(customer_id)), count(distinct(product_id))  from sales_fact_1997" )
-      .rows( "5581|1559" )
+      .rows( "5,581|1,559" )
       .build();
     sqlContext.verify( sqlExpectation );
   }
@@ -55,7 +55,7 @@ public class DistinctCountTest {
     SqlContext sqlContext = SqlContext.defaultContext();
     SqlExpectation sqlExpectation = SqlExpectation.newBuilder()
       .query( "select count( distinct customer_id, product_id) from sales_fact_1997" )
-      .rows( "85452" )
+      .rows( "85,452" )
       .build();
     sqlContext.verify( sqlExpectation );
   }
@@ -85,7 +85,7 @@ public class DistinctCountTest {
         .types( Types.CHAR, Types.CHAR, Types.CHAR, Types.BOOLEAN, Types.CHAR, Types.CHAR, Types.SMALLINT,
             Types.SMALLINT, Types.CHAR, Types.CHAR, Types.INTEGER, Types.INTEGER, Types.CHAR )
 
-        .rows( "foodmart|null|product|false||i_product_id|3|1|product_id|A|1560|0|null" )
+        .rows( "foodmart|null|product|false||i_product_id|3|1|product_id|A|1,560|0|null" )
 
         .partial()
         .build();
