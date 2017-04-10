@@ -1,2 +1,5 @@
 /target
 /pentaho-big-data-plugin
+.idea
+mondrian-tck.iml
+
